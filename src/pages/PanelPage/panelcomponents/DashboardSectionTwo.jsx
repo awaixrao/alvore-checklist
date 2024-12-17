@@ -1,4 +1,5 @@
-const DashboardCards = () => {
+
+const DashboardSectionTwo = () => {
   return (
     <div className="p-5 flex justify-center">
       {/* Cards Container */}
@@ -89,4 +90,4 @@ const DashboardCards = () => {
   );
 };
 
-export default DashboardCards;
+export default DashboardSectionTwo;

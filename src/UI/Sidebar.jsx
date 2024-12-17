@@ -38,7 +38,7 @@ const Sidebar = () => {
           <ul className="space-y-2">
             <li>
               <Link
-                to="/panel"
+                to="/"
                 className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-blue-100 hover:text-blue-600"
               >
                 <LuLayoutPanelLeft size={20} />
@@ -67,6 +67,20 @@ const Sidebar = () => {
                   className="w-6 h-6"
                 />
                 <span>UNITS</span>
+              </Link>
+            </li>
+
+            <li>
+              <Link
+                to="/units"
+                className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-blue-100 hover:text-blue-600"
+              >
+                <img
+                  src="https://s3-alpha-sig.figma.com/img/8b8e/4ca8/71aca42a0e316406c8f99c5931cbcc4e?Expires=1735516800&Key-Pair-Id=APKAQ4GOSFWCVNEHN3O4&Signature=PbaRk5B-IX1GtpyC78LqRWKQPI4UiD4-OqKcpSBjZqGa9WAfWZPaNoPNsWl-4omdtrFpZskeK3rqXANbNjJyMnj741mZYEnmMhVwkJYhXQ7XZ7u~f8fZ2gRc3MmmdThIGsLOGLIMZGDKMsqKQisB4nj7SobcLOkSrZRjMYJotUxZybjDj9tm9fFjhF23TJVtz00HLmlpd7HVxMyjSZsN0UMMNdDkoiDECnpjr0vpHSsvl8WrU6WDLvWsF3p~ZeDPHRHuXq6cdIrGfNBDYMUSFpyMYLkN1cbkJejQirdDchpQP20XBzhPnMMe48dnzgNFcOn50CI8pS360koHRjaHyg__"
+                  alt="Units Icon"
+                  className="w-6 h-6"
+                />
+                <span>USERS</span>
               </Link>
             </li>
 

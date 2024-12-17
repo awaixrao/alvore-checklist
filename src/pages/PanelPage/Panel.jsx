@@ -1,18 +1,29 @@
-import Dashboard from "./panelcomponents/dashboard";
-import DashboardCards from "./panelcomponents/cards";
+import DashboardSectionFive from "./panelcomponents/DashboardSectionFive";
+import DashboardSectionFour from "./panelcomponents/DashboardSectionFoyr";
+import DashboardSectionOne from "./panelcomponents/dashboardSectionOne";
+import DashboardSectionSix from "./panelcomponents/DashboardSectionSix";
+import DashboardSectionThree from "./panelcomponents/DashboardSectionThree";
+import DashboardSectionTwo from "./panelcomponents/DashboardSectionTwo";
+import DashboardHeader from "../../UI/Header";
 
 const Panel = () => {
   return (
-    <div className="p-5 min-h-screen">
-      {/* Container with unified width */}
-      <div className="max-w-7xl mx-auto ">
-        {/* Dashboard Component */}
-        <Dashboard />
+    <>
+      <DashboardHeader />
+      <div className="p-5 min-h-screen">
+        <div className="max-w-7xl mx-auto ">
+          {/* Dashboard Component */}
+          <DashboardSectionOne />
 
-        {/* DashboardCards Component */}
-        <DashboardCards />
+          {/* DashboardCards Component */}
+          <DashboardSectionTwo />
+          <DashboardSectionThree />
+          <DashboardSectionFour />
+          <DashboardSectionFive />
+          <DashboardSectionSix />
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 
