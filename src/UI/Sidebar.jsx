@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { TbFileSettings } from "react-icons/tb";
 import { FiMapPin, FiMenu, FiX } from "react-icons/fi"; // Toggle icons
@@ -7,16 +7,33 @@ import { VscChecklist } from "react-icons/vsc";
 
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false); // Sidebar toggle state
+  const [showToggle, setShowToggle] = useState(true); // Toggle visibility state
+
+  // Handle scroll event to hide/show toggle button
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 50) {
+        setShowToggle(false); // Hide toggle button after scrolling 50px
+      } else {
+        setShowToggle(true); // Show toggle button when at the top
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll); // Cleanup
+  }, []);
 
   return (
     <div className="relative">
       {/* Toggle Button (Right Side) */}
-      <button
-        className="fixed top-4 right-4 z-50 md:hidden text-gray-700"
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        {isOpen ? <FiX size={24} /> : <FiMenu size={24} />}
-      </button>
+      {showToggle && (
+        <button
+          className="fixed top-4 right-4 z-50 md:hidden text-gray-700"
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          {isOpen ? <FiX size={24} /> : <FiMenu size={24} />}
+        </button>
+      )}
 
       {/* Sidebar */}
       <aside

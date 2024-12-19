@@ -10,6 +10,7 @@ import Register from "./pages/Register/Register";
 import ForgotPassword from "./pages/ForgotPassword/ForgotPassword";
 import OTPVerification from "./pages/VerificationPage/OTPVerification";
 import ResetPassword from "./pages/ResetPassword/ResetPassword";
+import ChecklistPage from "./pages/Checklist/ChecklistPage";
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
         <Route path="/units" element={<Units />} />
         <Route path="/users" element={<Users />} />
         <Route path="/routes" element={<RoutesPage />} />
+        <Route path="/checklist" element={<ChecklistPage />} />
       </Route>
     </Routes>
   );
