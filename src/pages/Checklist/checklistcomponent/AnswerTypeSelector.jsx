@@ -1,4 +1,3 @@
-import React from "react";
 
 const answerTypes = [
   { value: "text", label: "Fill In Space (Text)" },
