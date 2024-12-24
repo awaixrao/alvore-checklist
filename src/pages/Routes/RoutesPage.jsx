@@ -1,17 +1,45 @@
 import { useState } from "react";
-import { Form, Input, Button } from "antd";
+import { Form, Input, Button, message } from "antd";
 import "antd/dist/reset.css";
 import DashboardHeader from "../../UI/Header";
 import Popup from "../../UI/PopUp"; // Import the Popup component
+import { usePostMutation } from "../../services/apiService"; // Import the API service
 
 const RoutesPage = () => {
   const [form] = Form.useForm();
   const [showPopup, setShowPopup] = useState(false); // State to control popup visibility
+  const [createRoute, { isLoading }] = usePostMutation(); // Hook for the create API
 
   // Submit handler
-  const onFinish = (values) => {
-    console.log("Form Submitted Successfully:", values);
-    setShowPopup(true); // Show the popup
+  const onFinish = async (values) => {
+    try {
+      const token = localStorage.getItem("authToken"); // Retrieve token from localStorage
+      const payload = {
+        routeNumber: values.routeNumber,
+        economicUnit: values.economicUnit,
+        branchCode: values.branchCode, // Use branchCode instead of branch ID
+        username: values.username, // Use username instead of user ID
+      };
+
+      const response = await createRoute({
+        path: "route/create", // API endpoint
+        body: payload,
+        headers: {
+          Authorization: `Bearer ${token}`, // Add the token here
+        },
+      }).unwrap();
+
+      // Handle success
+      console.log("API Response:", response);
+      message.success(response.message || "Route created successfully!");
+      setShowPopup(true); // Show the popup after successful creation
+    } catch (error) {
+      // Handle errors
+      console.error("Error:", error);
+      message.error(
+        error?.data?.message || "Failed to create route. Please try again."
+      );
+    }
   };
 
   const onFinishFailed = (errorInfo) => {
@@ -40,7 +68,7 @@ const RoutesPage = () => {
               label={
                 <span className="text-gray-700 font-medium">Route Number</span>
               }
-              name="route_number"
+              name="routeNumber"
               rules={[{ required: true, message: "Route number is required!" }]}
               style={{ marginBottom: "12px" }}
             >
@@ -50,15 +78,17 @@ const RoutesPage = () => {
               />
             </Form.Item>
 
-            {/* Branch */}
+            {/* Branch Code */}
             <Form.Item
-              label={<span className="text-gray-700 font-medium">Branch</span>}
-              name="branch"
-              rules={[{ required: true, message: "Branch name is required!" }]}
+              label={
+                <span className="text-gray-700 font-medium">Branch Code</span>
+              }
+              name="branchCode"
+              rules={[{ required: true, message: "Branch code is required!" }]}
               style={{ marginBottom: "12px" }}
             >
               <Input
-                placeholder="Enter Branch Name"
+                placeholder="Enter Branch Code"
                 className="border rounded-md py-2 px-4"
               />
             </Form.Item>
@@ -68,7 +98,7 @@ const RoutesPage = () => {
               label={
                 <span className="text-gray-700 font-medium">Economic Unit</span>
               }
-              name="economic_unit"
+              name="economicUnit"
               rules={[
                 { required: true, message: "Economic unit is required!" },
               ]}
@@ -80,15 +110,17 @@ const RoutesPage = () => {
               />
             </Form.Item>
 
-            {/* User */}
+            {/* Username */}
             <Form.Item
-              label={<span className="text-gray-700 font-medium">User</span>}
-              name="user"
-              rules={[{ required: true, message: "User name is required!" }]}
+              label={
+                <span className="text-gray-700 font-medium">Username</span>
+              }
+              name="username"
+              rules={[{ required: true, message: "Username is required!" }]}
               style={{ marginBottom: "12px" }}
             >
               <Input
-                placeholder="Enter User Name"
+                placeholder="Enter Username"
                 className="border rounded-md py-2 px-4"
               />
             </Form.Item>
@@ -107,6 +139,7 @@ const RoutesPage = () => {
             <Button
               type="primary"
               htmlType="submit"
+              loading={isLoading} // Show loading spinner during API call
               className="rounded bg-blue-600 hover:bg-blue-500 px-6 py-2"
             >
               Send now

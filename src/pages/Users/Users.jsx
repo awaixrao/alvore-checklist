@@ -1,17 +1,59 @@
 import { useState } from "react";
-import { Form, Input, Button, Upload } from "antd";
+import { Form, Input, Button, Upload, Select, message } from "antd";
 import "antd/dist/reset.css";
 import { UploadOutlined } from "@ant-design/icons";
 import Popup from "../../UI/PopUp";
+import { usePostMutation } from "../../services/apiService"; // Adjust the path to your apiSlice
 
 const Users = () => {
   const [form] = Form.useForm();
   const [showPopup, setShowPopup] = useState(false); // State to control popup visibility
+  const [registerUser, { isLoading }] = usePostMutation(); // API hook
+
+  // State for displaying the top bar details
+  const [firstName, setFirstName] = useState(""); // First Name
+  const [lastName, setLastName] = useState(""); // Last Name
+
+  // Generate initials for the profile image
+  const getInitials = () => {
+    const firstInitial = firstName.charAt(0).toUpperCase() || "";
+    const lastInitial = lastName.charAt(0).toUpperCase() || "";
+    return `${firstInitial}${lastInitial}`;
+  };
 
   // Submit handler
-  const onFinish = (values) => {
-    console.log("Form Submitted Successfully:", values);
-    setShowPopup(true); // Show the popup
+  const onFinish = async (values) => {
+    try {
+      // Adjust the payload to match API requirements
+      const payload = {
+        firstname: values.first_name,
+        lastname: values.last_name,
+        username: values.username,
+        licensenumber: values.license_number || "",
+        licenseimage: "", // Placeholder since image upload handling isn't covered here
+        password: values.password,
+        role: values.role,
+        phone: values.phone || "",
+        expirationdate: values.expiration_date || "",
+      };
+
+      // Call the API
+      const response = await registerUser({
+        path: "auth/register", // Adjust path as necessary
+        body: payload,
+      }).unwrap();
+
+      // Handle success
+      console.log("API Response:", response);
+      message.success(response.message || "User registered successfully!");
+      setShowPopup(true); // Show popup after successful registration
+    } catch (error) {
+      // Handle errors
+      console.error("Error:", error);
+      message.error(
+        error?.data?.message || "Registration failed. Please try again."
+      );
+    }
   };
 
   const onFinishFailed = (errorInfo) => {
@@ -27,9 +69,11 @@ const Users = () => {
       >
         <div className="bg-gray-300 h-24 w-24 rounded-full flex items-center justify-center text-gray-500 text-4xl font-bold shadow-md">
           {/* User Image Placeholder */}
-          <span>IK</span>
+          <span>{getInitials()}</span>
         </div>
-        <h2 className="text-gray-800 font-medium text-2xl mt-4">Ilhan Karim</h2>
+        <h2 className="text-gray-800 font-medium text-2xl mt-4">
+          {firstName || "First Name"} {lastName || "Last Name"}
+        </h2>
       </div>
 
       {/* Form Container */}
@@ -44,37 +88,57 @@ const Users = () => {
         >
           {/* Grid Layout */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-4">
-            {/* Left Column: 5 Fields */}
+            {/* Left Column */}
             <div className="space-y-4">
               <Form.Item
                 label={
-                  <span className="text-gray-700 font-medium">
-                    Employee/User ID
-                  </span>
+                  <span className="text-gray-700 font-medium">Username</span>
                 }
-                name="employee_id"
-                rules={[
-                  { required: true, message: "Employee/User ID is required!" },
-                ]}
+                name="username"
+                rules={[{ required: true, message: "Username is required!" }]}
               >
                 <Input
-                  placeholder="Enter Employee/User ID"
+                  placeholder="Enter Username"
                   className="border rounded-md py-2 px-4"
                 />
               </Form.Item>
 
-              <Form.Item
-                label={
-                  <span className="text-gray-700 font-medium">First Name</span>
-                }
-                name="first_name"
-                rules={[{ required: true, message: "First name is required!" }]}
-              >
-                <Input
-                  placeholder="Enter First Name"
-                  className="border rounded-md py-2 px-4"
-                />
-              </Form.Item>
+              {/* First Name and Last Name Fields Side-by-Side */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
+                <Form.Item
+                  label={
+                    <span className="text-gray-700 font-medium">
+                      First Name
+                    </span>
+                  }
+                  name="first_name"
+                  rules={[
+                    { required: true, message: "First name is required!" },
+                  ]}
+                >
+                  <Input
+                    placeholder="Enter First Name"
+                    className="border rounded-md py-2 px-4"
+                    onChange={(e) => setFirstName(e.target.value)} // Update state
+                  />
+                </Form.Item>
+
+                <Form.Item
+                  label={
+                    <span className="text-gray-700 font-medium">Last Name</span>
+                  }
+                  name="last_name"
+                  rules={[
+                    { required: true, message: "Last name is required!" },
+                  ]}
+                >
+                  <Input
+                    placeholder="Enter Last Name"
+                    className="border rounded-md py-2 px-4"
+                    onChange={(e) => setLastName(e.target.value)} // Update state
+                  />
+                </Form.Item>
+              </div>
 
               <Form.Item
                 label={
@@ -92,47 +156,20 @@ const Users = () => {
               <Form.Item
                 label={
                   <span className="text-gray-700 font-medium">
-                    Mobile Number
+                    Phone Number
                   </span>
                 }
-                name="mobile_number"
+                name="phone"
               >
                 <Input
-                  placeholder="Enter Mobile Number"
-                  className="border rounded-md py-2 px-4"
-                />
-              </Form.Item>
-
-              <Form.Item
-                label={
-                  <span className="text-gray-700 font-medium">
-                    License Expiration Date
-                  </span>
-                }
-                name="expiration_date"
-              >
-                <Input
-                  placeholder="Enter License Expiration Date"
+                  placeholder="Enter Phone Number"
                   className="border rounded-md py-2 px-4"
                 />
               </Form.Item>
             </div>
 
-            {/* Right Column: 3 Fields */}
+            {/* Right Column */}
             <div className="space-y-4">
-              <Form.Item
-                label={
-                  <span className="text-gray-700 font-medium">Last Name</span>
-                }
-                name="last_name"
-                rules={[{ required: true, message: "Last name is required!" }]}
-              >
-                <Input
-                  placeholder="Enter Last Name"
-                  className="border rounded-md py-2 px-4"
-                />
-              </Form.Item>
-
               <Form.Item
                 label={
                   <span className="text-gray-700 font-medium">
@@ -150,6 +187,20 @@ const Users = () => {
               <Form.Item
                 label={
                   <span className="text-gray-700 font-medium">
+                    License Expiration Date
+                  </span>
+                }
+                name="expiration_date"
+              >
+                <Input
+                  placeholder="Enter License Expiration Date"
+                  className="border rounded-md py-2 px-4"
+                />
+              </Form.Item>
+
+              <Form.Item
+                label={
+                  <span className="text-gray-700 font-medium">
                     Upload License
                   </span>
                 }
@@ -158,6 +209,18 @@ const Users = () => {
                 <Upload>
                   <Button icon={<UploadOutlined />}>Upload Image</Button>
                 </Upload>
+              </Form.Item>
+
+              {/* Role Dropdown */}
+              <Form.Item
+                label={<span className="text-gray-700 font-medium">Role</span>}
+                name="role"
+                rules={[{ required: true, message: "Please select a role!" }]}
+              >
+                <Select placeholder="Select Role" className="border rounded-md">
+                  <Select.Option value="admin">Admin</Select.Option>
+                  <Select.Option value="customer">Driver</Select.Option>
+                </Select>
               </Form.Item>
             </div>
           </div>
@@ -175,6 +238,7 @@ const Users = () => {
             <Button
               type="primary"
               htmlType="submit"
+              loading={isLoading}
               className="rounded bg-blue-600 hover:bg-blue-500 px-6 py-2"
             >
               Send now

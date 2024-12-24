@@ -1,19 +1,40 @@
 import { useState } from "react";
-import { Form, Input, Select, Button } from "antd";
+import { Form, Input, Select, Button, message } from "antd";
 import "antd/dist/reset.css";
 import DashboardHeader from "../../UI/Header";
 import Popup from "../../UI/PopUp"; // Import the Popup component
+import { usePostMutation } from "../../services/apiService"; // Import the API service
 
 const { Option } = Select;
 
 const Branches = () => {
   const [form] = Form.useForm();
   const [showPopup, setShowPopup] = useState(false); // State to control popup visibility
+  const [createBranch, { isLoading }] = usePostMutation(); // Hook for the create API
 
   // Submit handler
-  const onFinish = (values) => {
-    console.log("Form Submitted Successfully:", values);
-    setShowPopup(true); // Show the popup
+  const onFinish = async (values) => {
+    try {
+      const token = localStorage.getItem("authToken"); // Retrieve token from localStorage or your auth state
+      const response = await createBranch({
+        path: "branch/create", // API endpoint
+        body: values,
+        headers: {
+          Authorization: `Bearer ${token}`, // Add the token here
+        },
+      }).unwrap();
+
+      // Handle success
+      console.log("API Response:", response);
+      message.success(response.message || "Branch created successfully!");
+      setShowPopup(true); // Show the popup after successful creation
+    } catch (error) {
+      // Handle errors
+      console.error("Error:", error);
+      message.error(
+        error?.data?.message || "Failed to create branch. Please try again."
+      );
+    }
   };
 
   const onFinishFailed = (errorInfo) => {
@@ -41,7 +62,7 @@ const Branches = () => {
               label={
                 <span className="text-gray-700 font-medium">Branch code</span>
               }
-              name="branch_code"
+              name="branchCode"
               rules={[{ required: true, message: "Branch code is required!" }]}
               className="ant-form-item-required m-0"
             >
@@ -55,7 +76,7 @@ const Branches = () => {
               label={
                 <span className="text-gray-700 font-medium">Branch name</span>
               }
-              name="branch_name"
+              name="branchName"
               rules={[{ required: true, message: "Branch name is required!" }]}
               className="ant-form-item-required m-0"
             >
@@ -71,7 +92,7 @@ const Branches = () => {
                   Branch address
                 </span>
               }
-              name="branch_address"
+              name="branchAddress"
               rules={[
                 { required: true, message: "Branch address is required!" },
               ]}
@@ -113,7 +134,7 @@ const Branches = () => {
                   Branch details
                 </span>
               }
-              name="branch_details"
+              name="branchDetails"
               className="m-0"
             >
               <Input
@@ -136,6 +157,7 @@ const Branches = () => {
             <Button
               type="primary"
               htmlType="submit"
+              loading={isLoading}
               className="rounded bg-blue-600 hover:bg-blue-500 px-6 py-4"
             >
               Send now

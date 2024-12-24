@@ -1,12 +1,46 @@
 import { useNavigate } from "react-router-dom";
-import { Form, Input, Button, Checkbox } from "antd";
+import { Form, Input, Button, Checkbox, message } from "antd";
+import { useDispatch } from "react-redux";
+import { usePostMutation } from "../../services/apiService"; // Adjust the path to your apiSlice
+import { login } from "../../features/AuthSlice/authSlice";
 
 const Login = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const [loginApi, { isLoading }] = usePostMutation();
 
-  const onFinish = (values) => {
-    console.log("Success:", values);
-    navigate("/"); // Navigate after successful login
+  const onFinish = async (values) => {
+    try {
+      const response = await loginApi({
+        path: "auth/login",
+        body: values,
+      }).unwrap();
+
+      console.log("Login API response:", response); // Debug response
+
+      // Check user role and store authentication data
+      if (response?.user?.role === "admin") {
+        console.log("Response is valid, navigating to /");
+
+        // Dispatch to Redux store
+        dispatch(login(response));
+
+        // Optional: Persist to localStorage
+        // localStorage.setItem("token", token);
+        // localStorage.setItem("user", JSON.stringify(user));
+
+        message.success("Login successful!");
+
+        console.log("Before navigating to /");
+        navigate("/"); // Redirect to dashboard
+        console.log("After navigating to /");
+      } else {
+        message.error("Access denied. Only admins can log in.");
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      message.error(error?.data?.message || "Login failed. Please try again.");
+    }
   };
 
   return (
@@ -23,7 +57,7 @@ const Login = () => {
             Sign in to your account
           </h2>
           <p className="text-white text-xs">
-            Enter your email and password to log in
+            Enter your username and password to log in
           </p>
         </div>
 
@@ -83,20 +117,13 @@ const Login = () => {
               <Button
                 type="primary"
                 htmlType="submit"
+                loading={isLoading} // Show loading spinner during login
                 className="w-full py-2 text-white bg-blue-500 rounded-md hover:bg-blue-600"
               >
                 Access
               </Button>
             </Form.Item>
           </Form>
-
-          {/* Register Link */}
-          <div className="text-sm text-gray-600 text-center">
-            New here?{" "}
-            <a href="/register" className="text-blue-500 hover:underline">
-              Click here to register
-            </a>
-          </div>
         </div>
       </div>
     </div>

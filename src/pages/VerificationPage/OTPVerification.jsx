@@ -1,11 +1,16 @@
 import { useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
-import { Form, Button } from "antd";
+import { useNavigate, useLocation } from "react-router-dom";
+import { Form, Button, message } from "antd";
+import { usePostMutation } from "../../services/apiService"; // Import the API service
 
 const OTPVerification = () => {
   const navigate = useNavigate();
-  const [otp, setOtp] = useState(["", "", "", ""]);
-  const inputRefs = [useRef(), useRef(), useRef(), useRef()];
+  const { state } = useLocation(); // Access the state passed through navigate
+  const phoneNumber = state?.phone; // Get the phone number from state
+
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]); // Support 6 digits OTP
+  const inputRefs = Array.from({ length: 6 }, () => useRef());
+  const [verifyOtp, { isLoading }] = usePostMutation(); // Hook for OTP verification API
 
   // Handle input change
   const handleChange = (index, e) => {
@@ -30,36 +35,63 @@ const OTPVerification = () => {
   };
 
   // Handle form submission
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const otpValue = otp.join("");
-    if (otpValue.length === 4) {
-      navigate("/reset-password");
+    if (otpValue.length === 6) {
+      if (!phoneNumber) {
+        message.error("Phone number is required. Please go back and re-enter.");
+        return;
+      }
+
+      try {
+        const response = await verifyOtp({
+          path: "/auth/forgot-password/verify-otp",
+          body: { otp: otpValue, phone: phoneNumber },
+          credentials: "include", // Ensure session cookie is sent
+        }).unwrap();
+
+        // Handle success
+        console.log("API Response:", response);
+        if (response?.data?.data?.valid) {
+          message.success("OTP verified successfully!");
+          navigate("/reset-password", { state: { phone: phoneNumber } });
+        } else {
+          message.error("Invalid OTP. Please try again.");
+        }
+      } catch (error) {
+        // Handle errors
+        console.error("Error:", error);
+        message.error(
+          error?.data?.message || "Failed to verify OTP. Please try again."
+        );
+      }
+    } else {
+      message.error("Please enter a valid 6-digit OTP.");
     }
   };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <div className="w-full max-w-md bg-white shadow-md rounded-lg overflow-hidden">
-        {/* Header Section */}
         <div className="bg-blue-500 py-6 px-6 flex flex-col items-center">
           <img
-            src="https://s3-alpha-sig.figma.com/img/906b/c7ba/0245aec5f7480e8e14edaade481def72?Expires=1734912000&Key-Pair-Id=APKAQ4GOSFWCVNEHN3O4&Signature=KX9gp~eDZdSer31mhl67upYuJcPaeY5FcyEIwPt5c7Hun21-KryDV4PBvZtMSXvPIh~vMMFOKdmzWwcfkYomEl~y2Re2eHv~eH4GjFEHJjFov9Vexquzos0RqfCBxpbthnvfGAY5mMtWheDzA9gLwrs0AhyNLFG8NdeqwRIQNPdcaqblsyF8j48b~U1DX2bHcpV8gIiL6LlFZfP4vS4ZdeIvHPK9pTGyuOzU-V4FCsOERSN1QiiHuAIPGowgo3lCTFuNMsgaOSeE-NSeoYf4l8ZVXo3dIxw1TRgb9GKNYD2EtIzkIesRahb5TSCNZLUV8nmzCys6CD~GqLuj2DCSfg__"
+            src="https://s3-alpha-sig.figma.com/img/906b/c7ba/0245aec5f7480e8e14edaade481def72"
             alt="Logo"
             className="h-14 w-auto mb-5"
           />
           <h2 className="text-2xl font-bold text-white mb-1">
             Enter Verification Code
           </h2>
-          <p className="text-white text-xs">Enter the OTP sent to your email</p>
+          <p className="text-white text-xs">
+            Enter the OTP sent to your phone: {phoneNumber}
+          </p>
         </div>
 
-        {/* OTP Input Section */}
         <div className="px-6 py-6">
           <h3 className="text-lg font-semibold text-gray-700 text-center mb-4">
             Enter Verification Code
           </h3>
           <Form onFinish={handleSubmit}>
-            {/* OTP Input Boxes */}
             <div className="mb-8 text-center">
               <div className="flex justify-center space-x-4">
                 {otp.map((value, index) => (
@@ -77,7 +109,6 @@ const OTPVerification = () => {
               </div>
             </div>
 
-            {/* Resend OTP */}
             <div className="text-sm text-gray-600 text-center mb-4">
               Didn’t receive the code?{" "}
               <a href="#" className="text-blue-500 hover:underline">
@@ -85,14 +116,14 @@ const OTPVerification = () => {
               </a>
             </div>
 
-            {/* Submit Button */}
             <Form.Item className="mb-0">
               <Button
                 type="primary"
                 htmlType="submit"
+                loading={isLoading}
                 className="w-full py-2 text-sm font-semibold bg-blue-500 rounded-md hover:bg-blue-600"
               >
-                FOLLOWING
+                VERIFY
               </Button>
             </Form.Item>
           </Form>

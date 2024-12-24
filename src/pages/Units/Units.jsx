@@ -1,19 +1,56 @@
-import React, { useState } from "react";
-import { Form, Input, Select, Button } from "antd";
+import { useState } from "react";
+import { Form, Input, Select, Button, Upload, message } from "antd";
+import { UploadOutlined } from "@ant-design/icons";
 import "antd/dist/reset.css";
 import DashboardHeader from "../../UI/Header";
 import Popup from "../../UI/PopUp";
+import { usePostMutation } from "../../services/apiService"; // Adjust the path to your apiSlice
 
 const { Option } = Select;
 
 const Units = () => {
   const [form] = Form.useForm();
   const [showPopup, setShowPopup] = useState(false);
+  const [createCar, { isLoading }] = usePostMutation(); // Hook for the create API
 
   // Submit handler
-  const onFinish = (values) => {
-    console.log("Form Submitted Successfully:", values);
-    setShowPopup(true);
+  const onFinish = async (values) => {
+    try {
+      // Create payload with placeholder values for images
+      const payload = {
+        unitNumber: values.unitNumber,
+        plate: values.plate,
+        brand: values.brand,
+        model: values.model,
+        color: values.color,
+        year: values.year,
+        insuranceCompany: values.insuranceCompany,
+        branchCode: values.branchCode,
+        insuranceUpload:
+          values.insuranceUpload ||
+          "https://letsenhance.io/static/8f5e523ee6b2479e26ecc91b9c25261e/1015f/MainAfter.jpg",
+        vehicleCardUpload:
+          values.vehicleCardUpload ||
+          "https://plus.unsplash.com/premium_photo-1664474619075-644dd191935f?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8aW1hZ2V8ZW58MHx8MHx8fDA%3D",
+      };
+
+      // Call the API
+      const response = await createCar({
+        path: "car/create", // API endpoint
+        body: payload,
+      }).unwrap();
+
+      // Handle success
+      console.log("API Response:", response);
+      message.success(response.message || "Car created successfully!");
+      setShowPopup(true); // Show popup after successful creation
+    } catch (error) {
+      // Handle errors
+      console.error("Error:", error);
+      message.error(
+        error?.data?.message || "Failed to create car. Please try again."
+      );
+    }
   };
 
   const onFinishFailed = (errorInfo) => {
@@ -41,8 +78,9 @@ const Units = () => {
               label={
                 <span className="text-gray-700 font-medium">Unit Number</span>
               }
-              name="unit_number"
+              name="unitNumber"
               className="mb-0"
+              rules={[{ required: true, message: "Unit number is required!" }]}
             >
               <Input
                 placeholder="Unit Number"
@@ -54,6 +92,7 @@ const Units = () => {
               label={<span className="text-gray-700 font-medium">Plate</span>}
               name="plate"
               className="mb-0"
+              rules={[{ required: true, message: "Plate number is required!" }]}
             >
               <Input
                 placeholder="Plate Number"
@@ -65,6 +104,7 @@ const Units = () => {
               label={<span className="text-gray-700 font-medium">Brand</span>}
               name="brand"
               className="mb-0"
+              rules={[{ required: true, message: "Brand is required!" }]}
             >
               <Input
                 placeholder="Brand"
@@ -76,6 +116,7 @@ const Units = () => {
               label={<span className="text-gray-700 font-medium">Model</span>}
               name="model"
               className="mb-0"
+              rules={[{ required: true, message: "Model is required!" }]}
             >
               <Input
                 placeholder="Model"
@@ -87,6 +128,7 @@ const Units = () => {
               label={<span className="text-gray-700 font-medium">Color</span>}
               name="color"
               className="mb-0"
+              rules={[{ required: true, message: "Color is required!" }]}
             >
               <Input
                 placeholder="Color"
@@ -98,6 +140,7 @@ const Units = () => {
               label={<span className="text-gray-700 font-medium">Year</span>}
               name="year"
               className="mb-0"
+              rules={[{ required: true, message: "Year is required!" }]}
             >
               <Input
                 placeholder="Year"
@@ -108,41 +151,32 @@ const Units = () => {
             <Form.Item
               label={
                 <span className="text-gray-700 font-medium">
-                  Insurance Upload
-                </span>
-              }
-              name="insurance"
-              className="mb-0"
-            >
-              <Input
-                placeholder="Insurance Details"
-                className="border rounded-md py-2 px-4"
-              />
-            </Form.Item>
-
-            <Form.Item
-              label={
-                <span className="text-gray-700 font-medium">
                   Insurance Company
                 </span>
               }
-              name="insurance_company"
+              name="insuranceCompany"
               className="mb-0"
+              rules={[
+                { required: true, message: "Insurance company is required!" },
+              ]}
             >
               <Select
                 placeholder="Select Insurance Company"
                 className="rounded-md"
               >
-                <Option value="Company A">Company A</Option>
-                <Option value="Company B">Company B</Option>
-                <Option value="Company C">Company C</Option>
+                <Option value="State Farm">State Farm</Option>
+                <Option value="Mapfre">Mapfre</Option>
+                <Option value="Allianz">Allianz</Option>
               </Select>
             </Form.Item>
 
             <Form.Item
-              label={<span className="text-gray-700 font-medium">Branch</span>}
-              name="branch"
+              label={
+                <span className="text-gray-700 font-medium">Branch Code</span>
+              }
+              name="branchCode"
               className="mb-0"
+              rules={[{ required: true, message: "Branch Code is required!" }]}
             >
               <Input
                 placeholder="Branch"
@@ -153,16 +187,29 @@ const Units = () => {
             <Form.Item
               label={
                 <span className="text-gray-700 font-medium">
+                  Upload Insurance
+                </span>
+              }
+              name="insuranceUpload"
+              className="mb-0"
+            >
+              <Upload>
+                <Button icon={<UploadOutlined />}>Upload Insurance</Button>
+              </Upload>
+            </Form.Item>
+
+            <Form.Item
+              label={
+                <span className="text-gray-700 font-medium">
                   Upload Vehicle Card
                 </span>
               }
-              name="vehicle_card"
+              name="vehicleCardUpload"
               className="mb-0"
             >
-              <Input
-                placeholder="Upload Image"
-                className="border rounded-md py-2 px-4"
-              />
+              <Upload>
+                <Button icon={<UploadOutlined />}>Upload Vehicle Card</Button>
+              </Upload>
             </Form.Item>
           </div>
 
@@ -179,6 +226,7 @@ const Units = () => {
             <Button
               type="primary"
               htmlType="submit"
+              loading={isLoading}
               className="rounded bg-blue-600 hover:bg-blue-500 px-6 py-2"
             >
               Send now

@@ -1,12 +1,40 @@
-import { useNavigate } from "react-router-dom";
-import { Form, Input, Button } from "antd";
+import { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { Form, Input, Button, message } from "antd";
+import { usePostMutation } from "../../services/apiService"; // Import the API service
 
 const ResetPassword = () => {
   const navigate = useNavigate();
+  const { state } = useLocation(); // Get phone number from state
+  const phoneNumber = state?.phone; // Access the phone number
 
-  const onFinish = (values) => {
-    console.log("Success:", values);
-    navigate("/login"); // Navigate back to login after password reset
+  const [resetPassword, { isLoading }] = usePostMutation(); // Hook for password reset API
+
+  // Handle form submission
+  const onFinish = async (values) => {
+    if (!phoneNumber) {
+      message.error("Phone number is required. Please go back and re-enter.");
+      return;
+    }
+
+    try {
+      const response = await resetPassword({
+        path: "/auth/forgot-password/reset", // API endpoint
+        body: { phone: phoneNumber, newPassword: values.newPassword },
+        credentials: "include", // Ensure session cookie is sent
+      }).unwrap();
+
+      // Handle success
+      console.log("API Response:", response);
+      message.success("Password reset successfully!");
+      navigate("/login"); // Navigate to login page after password reset
+    } catch (error) {
+      // Handle errors
+      console.error("Error:", error);
+      message.error(
+        error?.data?.message || "Failed to reset password. Please try again."
+      );
+    }
   };
 
   return (
@@ -84,6 +112,7 @@ const ResetPassword = () => {
               <Button
                 type="primary"
                 htmlType="submit"
+                loading={isLoading} // Show loading spinner during API call
                 className="w-full py-2 text-white bg-blue-500 rounded-md hover:bg-blue-600"
               >
                 Reset Password

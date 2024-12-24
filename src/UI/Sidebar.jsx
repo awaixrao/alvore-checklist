@@ -1,13 +1,21 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { Modal, message } from "antd";
+import { useDispatch } from "react-redux";
 import { TbFileSettings } from "react-icons/tb";
-import { FiMapPin, FiMenu, FiX } from "react-icons/fi"; // Toggle icons
+import { FiMapPin, FiMenu, FiX, FiLogOut } from "react-icons/fi"; // Toggle icons
 import { LuLayoutPanelLeft } from "react-icons/lu";
 import { VscChecklist } from "react-icons/vsc";
+import { logout } from "../features/AuthSlice/authSlice"; // Import logout action
+import { persistor } from "../store/store"; // Import persistor
+import { FaCar } from "react-icons/fa";
 
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false); // Sidebar toggle state
   const [showToggle, setShowToggle] = useState(true); // Toggle visibility state
+  const [isModalVisible, setIsModalVisible] = useState(false); // Logout modal state
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   // Handle scroll event to hide/show toggle button
   useEffect(() => {
@@ -22,6 +30,27 @@ const Sidebar = () => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll); // Cleanup
   }, []);
+
+  // Handle logout
+  const handleLogout = async () => {
+    try {
+      // Dispatch logout action
+      dispatch(logout());
+
+      // Purge persistor to clear persisted state
+      await persistor.purge();
+
+      // Remove token from local storage (if used)
+      localStorage.removeItem("token");
+
+      // Show success message and navigate to login
+      message.success("Logged out successfully");
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+      message.error("Failed to logout. Please try again.");
+    }
+  };
 
   return (
     <div className="relative">
@@ -44,7 +73,7 @@ const Sidebar = () => {
         {/* Logo Section */}
         <div className="flex items-center justify-center py-6">
           <img
-            src="https://s3-alpha-sig.figma.com/img/906b/c7ba/0245aec5f7480e8e14edaade481def72?Expires=1734912000&Key-Pair-Id=APKAQ4GOSFWCVNEHN3O4&Signature=KX9gp~eDZdSer31mhl67upYuJcPaeY5FcyEIwPt5c7Hun21-KryDV4PBvZtMSXvPIh~vMMFOKdmzWwcfkYomEl~y2Re2eHv~eH4GjFEHJjFov9Vexquzos0RqfCBxpbthnvfGAY5mMtWheDzA9gLwrs0AhyNLFG8NdeqwRIQNPdcaqblsyF8j48b~U1DX2bHcpV8gIiL6LlFZfP4vS4ZdeIvHPK9pTGyuOzU-V4FCsOERSN1QiiHuAIPGowgo3lCTFuNMsgaOSeE-NSeoYf4l8ZVXo3dIxw1TRgb9GKNYD2EtIzkIesRahb5TSCNZLUV8nmzCys6CD~GqLuj2DCSfg__"
+            src="https://s3-alpha-sig.figma.com/img/906b/c7ba/0245aec5f7480e8e14edaade481def72?Expires=1736121600&Key-Pair-Id=APKAQ4GOSFWCVNEHN3O4&Signature=SKZTidnVfaYwkVFIt75yiLD1WhcMWXQrGF7Hy30HGOreMR2xHqFZ8mAIfmqyrKoRURKsc-4gbQdlKxSB~cda4STWQyLqgrJ3eU394gUi9eKNxhF51f1XIjp4CtTMC3N73T2~6T1B5WiQojukGvhBHLrIlIbNqaH7ue-aKiHdeerZdfGQIj4aFF6MmwQotpSCqB5-DvrCVtHEbzunuo42aG45sRtz6ijQoKe3oU2~-Onu4vEanNZMj4eJRabstVuSBL~8ksu2Wp~4O2LFM7aVqgBVk5qFDMgXzA0VUprNTGS1fpeTxfww0McJO1l7t-bHNPP3lHj22--SNpjbxwG0Sw__"
             alt="Logo"
             className="w-32"
           />
@@ -62,7 +91,6 @@ const Sidebar = () => {
                 <span>PANEL</span>
               </Link>
             </li>
-
             <li>
               <Link
                 to="/branches"
@@ -72,21 +100,16 @@ const Sidebar = () => {
                 <span>BRANCHES</span>
               </Link>
             </li>
-
             <li>
               <Link
                 to="/units"
                 className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-blue-100 hover:text-blue-600"
               >
-                <img
-                  src="https://s3-alpha-sig.figma.com/img/196e/89b5/46232902ca8c126b013239ce0657d96d?Expires=1734912000&Key-Pair-Id=APKAQ4GOSFWCVNEHN3O4&Signature=Ba0ex4c8FxUhH77ZHkZ89kGgZAqeF090Nyh26w0~17Sj6Xf4sNAuEOFLfqvvT6yPy90xaCwoVEZ87vYnj0D1jvzG2qWR~VLhxcg-rqyXesw~LEmljg2KuLXMHZd7vZ-w7EtlJL2ALisQflJazMaS6ZSgJqdzJpj6aZ7tNCp7ChY058In6UvYtjMIdu0L8HTS73hD1ItHlTru~vczUE1GPqYEE9dOOxv0L7OnBWeTrQL6u~rWVYdjL3FwI9mASnfpRdxq-3q6G4qBpKLvo6XkXCjyH6nvxggJwMARrN00j2gLumV6lYSrw68XrbdQFM1GhOsNbZ71uFP3TgGDWIzJ8A__"
-                  alt="Units Icon"
-                  className="w-6 h-6"
-                />
+                <FaCar size={20} />
+
                 <span>UNITS</span>
               </Link>
             </li>
-
             <li>
               <Link
                 to="/users"
@@ -94,13 +117,12 @@ const Sidebar = () => {
               >
                 <img
                   src="https://s3-alpha-sig.figma.com/img/8b8e/4ca8/71aca42a0e316406c8f99c5931cbcc4e?Expires=1735516800&Key-Pair-Id=APKAQ4GOSFWCVNEHN3O4&Signature=PbaRk5B-IX1GtpyC78LqRWKQPI4UiD4-OqKcpSBjZqGa9WAfWZPaNoPNsWl-4omdtrFpZskeK3rqXANbNjJyMnj741mZYEnmMhVwkJYhXQ7XZ7u~f8fZ2gRc3MmmdThIGsLOGLIMZGDKMsqKQisB4nj7SobcLOkSrZRjMYJotUxZybjDj9tm9fFjhF23TJVtz00HLmlpd7HVxMyjSZsN0UMMNdDkoiDECnpjr0vpHSsvl8WrU6WDLvWsF3p~ZeDPHRHuXq6cdIrGfNBDYMUSFpyMYLkN1cbkJejQirdDchpQP20XBzhPnMMe48dnzgNFcOn50CI8pS360koHRjaHyg__"
-                  alt="Units Icon"
+                  alt="Users Icon"
                   className="w-6 h-6"
                 />
                 <span>USERS</span>
               </Link>
             </li>
-
             <li>
               <Link
                 to="/routes"
@@ -110,7 +132,6 @@ const Sidebar = () => {
                 <span>ROUTES</span>
               </Link>
             </li>
-
             <li>
               <Link
                 to="/checklist"
@@ -120,9 +141,33 @@ const Sidebar = () => {
                 <span>CHECKLIST</span>
               </Link>
             </li>
+
+            {/* Logout Option */}
+            <li>
+              <button
+                onClick={() => setIsModalVisible(true)}
+                className="w-full text-left flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-red-100 hover:text-red-600"
+              >
+                <FiLogOut size={20} />
+                <span>LOGOUT</span>
+              </button>
+            </li>
           </ul>
         </nav>
       </aside>
+
+      {/* Logout Confirmation Modal */}
+      <Modal
+        title="Confirm Logout"
+        visible={isModalVisible}
+        onOk={handleLogout}
+        onCancel={() => setIsModalVisible(false)}
+        okText="Yes, Logout"
+        cancelText="Cancel"
+        centered
+      >
+        <p>Are you sure you want to logout?</p>
+      </Modal>
 
       {/* Overlay (for mobile) */}
       {isOpen && (

@@ -6,22 +6,68 @@ import Units from "./pages/Units/Units";
 import RoutesPage from "./pages/Routes/RoutesPage";
 import Users from "./pages/Users/Users";
 import Login from "./pages/Login/login";
-import Register from "./pages/Register/Register";
+// import Register from "./pages/Register/Register";
 import ForgotPassword from "./pages/ForgotPassword/ForgotPassword";
 import OTPVerification from "./pages/VerificationPage/OTPVerification";
 import ResetPassword from "./pages/ResetPassword/ResetPassword";
 import ChecklistPage from "./pages/Checklist/ChecklistPage";
+import ProtectedRoute from "./ProtectedRoute"; // Import ProtectedRoute
+import PublicRoute from "./PublicRoute"; // Import PublicRoute
 
 function App() {
   return (
     <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="/verification" element={<OTPVerification />} />
-      <Route path="/reset-password" element={<ResetPassword />} />
+      {/* Public Routes */}
+      <Route
+        path="/login"
+        element={
+          <PublicRoute>
+            <Login />
+          </PublicRoute>
+        }
+      />
+      {/* <Route
+        path="/register"
+        element={
+          <PublicRoute>
+            <Register />
+          </PublicRoute>
+        }
+      /> */}
+      <Route
+        path="/forgot-password"
+        element={
+          <PublicRoute>
+            <ForgotPassword />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/verification"
+        element={
+          <PublicRoute>
+            <OTPVerification />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/reset-password"
+        element={
+          <PublicRoute>
+            <ResetPassword />
+          </PublicRoute>
+        }
+      />
 
-      <Route path="" element={<DashboardLayout />}>
+      {/* Protected Routes */}
+      <Route
+        path=""
+        element={
+          <ProtectedRoute>
+            <DashboardLayout />
+          </ProtectedRoute>
+        }
+      >
         <Route path="/" element={<Panel />} />
         <Route path="/branches" element={<Branches />} />
         <Route path="/units" element={<Units />} />
