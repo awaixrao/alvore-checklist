@@ -4,6 +4,7 @@ import "antd/dist/reset.css";
 import DashboardHeader from "../../UI/Header";
 import Popup from "../../UI/PopUp"; // Import the Popup component
 import { usePostMutation } from "../../services/apiService"; // Import the API service
+import routeimg from "../../assets/routesimg.png";
 
 const RoutesPage = () => {
   const [form] = Form.useForm();
@@ -49,7 +50,7 @@ const RoutesPage = () => {
   return (
     <>
       {/* Header */}
-      <DashboardHeader image="https://s3-alpha-sig.figma.com/img/e5e4/ae58/efa84fbdfb472b443c753c3af14cc88a?Expires=1735516800&Key-Pair-Id=APKAQ4GOSFWCVNEHN3O4&Signature=fz9LIyg-IJR1f5Csea~QJGSbnN-fsbPAAGaera1vITNcdBW57r4ehkz1dLAOe71PoyZ6bH2j9VTEXNPqLl1pIgX66MCSQMMyDKIO3yVs85C1eo7adXRQSXRBaWi8BY9jAi-IHO2reR3DJFBk~xGbDZjIQRAvQkve1YUBEFDeYP7inZVSqIyv4BXHeRsW6AgnV-S-a1SvF8ZfPl~CFIlI97WbxZT~GRA~hZw8pnW5hyjmpPK5ar9QquMenhi63MegsH9H1u8clPS1VDS8KW-3jUXQglAJgzh5VHx4SrVsJH22UhI131EkxW0F6ROYkysADhkr4icFlCIxTh9zG9eR-Q__" />
+      <DashboardHeader image={routeimg} />
 
       {/* Form Container */}
       <div className="bg-white w-[85%] p-6 mx-auto mt-4">

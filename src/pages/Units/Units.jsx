@@ -4,6 +4,8 @@ import { UploadOutlined } from "@ant-design/icons";
 import "antd/dist/reset.css";
 import DashboardHeader from "../../UI/Header";
 import Popup from "../../UI/PopUp";
+import unitimg from "../../assets/unitimg.png";
+
 import { usePostMutation } from "../../services/apiService"; // Adjust the path to your apiSlice
 
 const { Option } = Select;
@@ -60,7 +62,7 @@ const Units = () => {
   return (
     <>
       {/* Header */}
-      <DashboardHeader image="https://s3-alpha-sig.figma.com/img/b036/6299/6178daabc29451041c2891eddcbcd375?Expires=1735516800&Key-Pair-Id=APKAQ4GOSFWCVNEHN3O4&Signature=feajsKnHYI~LTYowj-0kUTFGCBlm2JPXwlKXnUetIR~Eg3~utV8vm2Nof6n9bVhi1FLicDp9tCgVlaBCeSDw2bHtQHD9bnYIMGPqZqJC5J52saYFjGlch1evfjTFF9wAQInYCryRTbBwgfXVp2FKH9~6zM7uwjnrc~fWIih3NnXe4-yKP3jfpEvZE3ROYDU81quOwypvBC3jV94EizxPdr6PKOStvaTEEes9k1xx5Cz7ZM3x7M4P2DLCRAHsN-D6HhkmBOrEzDFRZiL84vEw284nTKVjmVCg9fVoOp9ivA~8370K9BEkU4ebx6qa9RpIKPiHda3p5YGLkh2JYnNw8Q__" />
+      <DashboardHeader image={unitimg} />
 
       {/* Form Container */}
       <div className="bg-white w-[85%] p-6 mx-auto mt-4">

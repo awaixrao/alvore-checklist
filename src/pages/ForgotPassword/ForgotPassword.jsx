@@ -2,6 +2,7 @@ import { useState } from "react"; // Correct import for useState
 import { useNavigate } from "react-router-dom";
 import { Form, Input, Button, message } from "antd";
 import { usePostMutation } from "../../services/apiService";
+import logo from "../../assets/alvorelogo.png";
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
@@ -35,11 +36,7 @@ const ForgotPassword = () => {
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <div className="w-full max-w-md bg-white shadow-md rounded-lg overflow-hidden">
         <div className="bg-blue-500 py-8 px-6 flex flex-col items-center">
-          <img
-            src="https://s3-alpha-sig.figma.com/img/906b/c7ba/0245aec5f7480e8e14edaade481def72?Expires=1734912000&Key-Pair-Id=APKAQ4GOSFWCVNEHN3O4&Signature=KX9gp~eDZdSer31mhl67upYuJcPaeY5FcyEIwPt5c7Hun21-KryDV4PBvZtMSXvPIh~vMMFOKdmzWwcfkYomEl~y2Re2eHv~eH4GjFEHJjFov9Vexquzos0RqfCBxpbthnvfGAY5mMtWheDzA9gLwrs0AhyNLFG8NdeqwRIQNPdcaqblsyF8j48b~U1DX2bHcpV8gIiL6LlFZfP4vS4ZdeIvHPK9pTGyuOzU-V4FCsOERSN1QiiHuAIPGowgo3lCTFuNMsgaOSeE-NSeoYf4l8ZVXo3dIxw1TRgb9GKNYD2EtIzkIesRahb5TSCNZLUV8nmzCys6CD~GqLuj2DCSfg__"
-            alt="Logo"
-            className="h-16 w-auto mb-4"
-          />
+          <img src={logo} alt="Logo" className="h-16 w-auto mb-4" />
           <h2 className="text-3xl font-bold text-white">Forgot Password</h2>
           <p className="text-white text-sm mt-2">
             Enter your phone number to reset your password

@@ -7,11 +7,12 @@ import DashboardSectionTwo from "./panelcomponents/DashboardSectionTwo";
 import DashboardHeader from "../../UI/Header";
 import DashboardSectionSeven from "./panelcomponents/DashoardSectionSeven";
 import DashboardSectionEight from "./panelcomponents/DashboardSectionEight";
+import panelimg from "../../assets/panelimg.png";
 
 const Panel = () => {
   return (
     <>
-      <DashboardHeader />
+      <DashboardHeader image={panelimg} />
       <div className="p-5 min-h-screen">
         <div className="max-w-7xl mx-auto ">
           {/* Dashboard Component */}

@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Form, Button, message } from "antd";
 import { usePostMutation } from "../../services/apiService"; // Import the API service
+import logo from "../../assets/alvorelogo.png";
 
 const OTPVerification = () => {
   const navigate = useNavigate();
@@ -74,11 +75,7 @@ const OTPVerification = () => {
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <div className="w-full max-w-md bg-white shadow-md rounded-lg overflow-hidden">
         <div className="bg-blue-500 py-6 px-6 flex flex-col items-center">
-          <img
-            src="https://s3-alpha-sig.figma.com/img/906b/c7ba/0245aec5f7480e8e14edaade481def72"
-            alt="Logo"
-            className="h-14 w-auto mb-5"
-          />
+          <img src={logo} alt="Logo" className="h-14 w-auto mb-5" />
           <h2 className="text-2xl font-bold text-white mb-1">
             Enter Verification Code
           </h2>

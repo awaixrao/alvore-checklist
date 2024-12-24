@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import DashboardHeader from "../../UI/Header";
+import checklistimg from "../../assets/checklistimg.png";
 
 const ChecklistPage = () => {
   const [categories, setCategories] = useState([]);
@@ -100,7 +101,7 @@ const ChecklistPage = () => {
 
   return (
     <>
-      <DashboardHeader image="https://s3-alpha-sig.figma.com/img/a16e/8036/f28a00c058d3efc242fdde5ce43bfe80?Expires=1735516800&Key-Pair-Id=APKAQ4GOSFWCVNEHN3O4&Signature=o20znAo~DHXM0cHGus3VDwFUkl6~DIek4ZDMIMs7amx3VuNSQpfVRm7-j17w7vTwgsqHbA~a3jO2CaQi-bWXw4FdXkOtu0yFUAsQdBIJCG0-draWIS3S6RxijTDK2VU20jDiwe5qTQB5U6ZoOZpSOINUKisWe1sNoNR7bM50ySP2p9Y6VBhmx480wC2V8s2xFyF-6AImsbfR817vJ-wdlyHJiqqwVBUK24J260n581v~Z9Cy1vvDY3d~VTDbnF6I6TXVKhYXnUuVMIpo62rVbD~plfMYPHqYScYSGjtGmCgMoUYg2sWnDeUrrjdZMjr8-AES384nsUbRfxtGuRDhEw__" />
+      <DashboardHeader image={checklistimg} />
 
       <div className="p-6 bg-gray-100 min-h-screen">
         <div className="bg-white shadow-md rounded-md p-6">

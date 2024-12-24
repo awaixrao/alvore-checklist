@@ -3,6 +3,7 @@ import { Form, Input, Button, Checkbox, message } from "antd";
 import { useDispatch } from "react-redux";
 import { usePostMutation } from "../../services/apiService"; // Adjust the path to your apiSlice
 import { login } from "../../features/AuthSlice/authSlice";
+import logo from "../../assets/alvorelogo.png";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -48,11 +49,7 @@ const Login = () => {
       <div className="w-full max-w-md bg-white shadow-md rounded-lg overflow-hidden">
         {/* Header Section */}
         <div className="bg-blue-500 py-6 px-6 flex flex-col items-center">
-          <img
-            src="https://s3-alpha-sig.figma.com/img/906b/c7ba/0245aec5f7480e8e14edaade481def72?Expires=1734912000&Key-Pair-Id=APKAQ4GOSFWCVNEHN3O4&Signature=KX9gp~eDZdSer31mhl67upYuJcPaeY5FcyEIwPt5c7Hun21-KryDV4PBvZtMSXvPIh~vMMFOKdmzWwcfkYomEl~y2Re2eHv~eH4GjFEHJjFov9Vexquzos0RqfCBxpbthnvfGAY5mMtWheDzA9gLwrs0AhyNLFG8NdeqwRIQNPdcaqblsyF8j48b~U1DX2bHcpV8gIiL6LlFZfP4vS4ZdeIvHPK9pTGyuOzU-V4FCsOERSN1QiiHuAIPGowgo3lCTFuNMsgaOSeE-NSeoYf4l8ZVXo3dIxw1TRgb9GKNYD2EtIzkIesRahb5TSCNZLUV8nmzCys6CD~GqLuj2DCSfg__"
-            alt="Logo"
-            className="h-14 w-auto mb-2"
-          />
+          <img src={logo} alt="Logo" className="h-14 w-auto mb-2" />
           <h2 className="text-2xl font-bold text-white mb-1">
             Sign in to your account
           </h2>

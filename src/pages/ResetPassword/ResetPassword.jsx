@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Form, Input, Button, message } from "antd";
 import { usePostMutation } from "../../services/apiService"; // Import the API service
+import logo from "../../assets/alvorelogo.png";
 
 const ResetPassword = () => {
   const navigate = useNavigate();
@@ -42,11 +43,7 @@ const ResetPassword = () => {
       <div className="w-full max-w-md bg-white shadow-md rounded-lg overflow-hidden">
         {/* Header Section */}
         <div className="bg-blue-500 py-6 px-6 flex flex-col items-center">
-          <img
-            src="https://s3-alpha-sig.figma.com/img/906b/c7ba/0245aec5f7480e8e14edaade481def72"
-            alt="Logo"
-            className="h-14 w-auto mb-2"
-          />
+          <img src={logo} alt="Logo" className="h-14 w-auto mb-2" />
           <h2 className="text-2xl font-bold text-white mb-1">
             Reset Your Password
           </h2>
