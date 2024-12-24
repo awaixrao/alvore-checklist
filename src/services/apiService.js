@@ -1,7 +1,6 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
-const REACT_APP_API_URL = "http://localhost:3003";
-const API_URL = REACT_APP_API_URL;
+const API_URL = import.meta.env.VITE_API_URL;
 
 // Handle blob downloads for file responses
 const handleBlobDownload = async (response, filename) => {
