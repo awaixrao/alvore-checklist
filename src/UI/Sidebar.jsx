@@ -10,8 +10,8 @@ import { logout } from "../features/AuthSlice/authSlice"; // Import logout actio
 import { persistor } from "../store/store"; // Import persistor
 
 // Importing local icons
-import usersIcon from "../assets/usersIcon.png";
-import unitIcon from "../assets/unitIcon.png";
+import usersIcon from "../assets/usersicon.png";
+import unitIcon from "../assets/uniticon.png";
 import logo from "../assets/alvorelogo.png";
 
 const Sidebar = () => {
