@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Button, message } from "antd";
 import DashboardHeader from "../../UI/Header";
 import ChecklistForm from "./checklistcomponent/ChecklistForm";
-import Sidebar from "./checklistcomponent/ChecklistSidebar";
+import Sidebar from "./checklistcomponent/checklistSidebar";
 import Popup from "../../UI/PopUp";
 import checklist from "../../assets/checklistimg.png";
 
