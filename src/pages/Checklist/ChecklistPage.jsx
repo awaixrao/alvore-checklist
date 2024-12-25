@@ -1,256 +1,164 @@
 import React, { useState } from "react";
+import { Button, message } from "antd";
 import DashboardHeader from "../../UI/Header";
-import checklistimg from "../../assets/checklistimg.png";
+import ChecklistForm from "./checklistcomponent/ChecklistForm";
+import Sidebar from "./checklistcomponent/ChecklistSidebar";
+import Popup from "../../UI/PopUp";
+import checklist from "../../assets/checklistimg.png";
+
+import { usePostMutation } from "../../services/apiService";
 
 const ChecklistPage = () => {
   const [categories, setCategories] = useState([]);
-  const [selectedCategoryId, setSelectedCategoryId] = useState(null);
-  const [selectedQuestionId, setSelectedQuestionId] = useState(null);
+  const [isChecklistCreated, setIsChecklistCreated] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
+  const [createChecklist, { isLoading }] = usePostMutation();
 
-  const answerTypes = [
-    { value: "text", label: "Fill In Space (Text)" },
-    { value: "dropdown", label: "Drop Down Answer" },
-    { value: "multiple_choice", label: "Multiple Choice" },
-    { value: "upload_image", label: "Upload Image" },
-    { value: "take_picture", label: "Take Picture" },
-    { value: "select_date", label: "Select Date" },
-    { value: "signature", label: "Signature" },
-  ];
+  // Function to handle adding an answer type from Sidebar
+  const onAddAnswerType = (answerType) => {
+    if (!categories.length) {
+      message.error("Please create a checklist first.");
+      return;
+    }
 
-  // Function to add a new category
+    setCategories((prev) =>
+      prev.map((category, index) =>
+        index === 0
+          ? {
+              ...category,
+              questions: [
+                ...category.questions,
+                {
+                  id: Date.now(),
+                  label: "",
+                  answerType,
+                  required: false,
+                  options: [],
+                  instructions: "", // Default empty instructions
+                },
+              ],
+            }
+          : category
+      )
+    );
+  };
+
+  const handleSaveChecklist = async () => {
+    try {
+      const token = localStorage.getItem("authToken");
+
+      // Prepare payload
+      const payload = {
+        title: categories[0]?.name || "New Checklist",
+        questions: categories[0]?.questions.map((question) => ({
+          label: question.label,
+          answerType: question.answerType,
+          isRequired: question.required,
+          choices: question.options || [],
+          instructions: question.instructions || "",
+        })),
+      };
+
+      // Call API
+      const response = await createChecklist({
+        path: "checklist/create",
+        body: payload,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }).unwrap();
+
+      message.success(response.message || "Checklist created successfully!");
+      setShowPopup(true); // Show the popup after success
+      setCategories([]); // Clear categories
+      setIsChecklistCreated(false); // Reset state
+    } catch (error) {
+      message.error(
+        error?.data?.message || "Failed to create checklist. Please try again."
+      );
+    }
+  };
+
+  const handleCancelChecklist = () => {
+    setCategories([]);
+    setIsChecklistCreated(false);
+  };
+
   const addCategory = () => {
     setCategories([
-      ...categories,
       {
         id: Date.now(),
         name: "",
         questions: [],
       },
     ]);
-  };
-
-  // Function to update a category
-  const updateCategory = (id, updatedData) => {
-    setCategories((prevCategories) =>
-      prevCategories.map((cat) =>
-        cat.id === id ? { ...cat, ...updatedData } : cat
-      )
-    );
-  };
-
-  // Function to add a question to a category
-  const addQuestion = (categoryId) => {
-    setCategories((prevCategories) =>
-      prevCategories.map((cat) =>
-        cat.id === categoryId
-          ? {
-              ...cat,
-              questions: [
-                ...cat.questions,
-                { id: Date.now(), label: "", answerType: null, options: [] },
-              ],
-            }
-          : cat
-      )
-    );
-  };
-
-  // Function to update a question
-  const updateQuestion = (categoryId, questionId, updatedData) => {
-    setCategories((prevCategories) =>
-      prevCategories.map((cat) =>
-        cat.id === categoryId
-          ? {
-              ...cat,
-              questions: cat.questions.map((q) =>
-                q.id === questionId ? { ...q, ...updatedData } : q
-              ),
-            }
-          : cat
-      )
-    );
-  };
-
-  // Function to remove a category
-  const removeCategory = (id) => {
-    setCategories((prevCategories) =>
-      prevCategories.filter((cat) => cat.id !== id)
-    );
-    if (selectedCategoryId === id) setSelectedCategoryId(null);
-  };
-
-  // Function to remove a question
-  const removeQuestion = (categoryId, questionId) => {
-    setCategories((prevCategories) =>
-      prevCategories.map((cat) =>
-        cat.id === categoryId
-          ? {
-              ...cat,
-              questions: cat.questions.filter((q) => q.id !== questionId),
-            }
-          : cat
-      )
-    );
-    if (selectedQuestionId === questionId) setSelectedQuestionId(null);
-  };
-
-  // Function to handle answer type selection
-  const selectAnswerType = (categoryId, questionId, type) => {
-    updateQuestion(categoryId, questionId, { answerType: type, options: [] });
+    setIsChecklistCreated(true);
   };
 
   return (
     <>
-      <DashboardHeader image={checklistimg} />
+      <DashboardHeader image={checklist} />
 
       <div className="p-6 bg-gray-100 min-h-screen">
-        <div className="bg-white shadow-md rounded-md p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h1 className="text-xl font-bold">Create Checklist</h1>
-            <button className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
-              Save Checklist
-            </button>
-          </div>
-
-          <div>
-            {categories.map((category) => (
-              <div
-                key={category.id}
-                className="bg-gray-50 shadow rounded-md p-4 mb-6"
+        {/* Header with Buttons */}
+        <div className="flex justify-between items-center mb-4">
+          <h1 className="text-xl font-bold">New Inspection Items</h1>
+          {isChecklistCreated ? (
+            <div className="flex space-x-4">
+              <Button
+                onClick={handleCancelChecklist}
+                className="rounded border px-6 py-2"
               >
-                <div className="flex justify-between items-center mb-4">
-                  <input
-                    type="text"
-                    value={category.name}
-                    onChange={(e) =>
-                      updateCategory(category.id, { name: e.target.value })
-                    }
-                    className="w-full px-2 py-1 border rounded-md"
-                    placeholder="Enter Category Name"
-                  />
-                  <button
-                    onClick={() => removeCategory(category.id)}
-                    className="text-red-500 text-sm"
-                  >
-                    Remove Category
-                  </button>
-                </div>
-
-                <div className="ml-4">
-                  {category.questions.map((question) => (
-                    <div
-                      key={question.id}
-                      className={`bg-white shadow rounded-md p-4 mb-4 border ${
-                        selectedQuestionId === question.id
-                          ? "border-blue-500"
-                          : "border-gray-300"
-                      }`}
-                      onClick={() => setSelectedQuestionId(question.id)}
-                    >
-                      <div className="flex justify-between items-center mb-4">
-                        <input
-                          type="text"
-                          value={question.label}
-                          onChange={(e) =>
-                            updateQuestion(category.id, question.id, {
-                              label: e.target.value,
-                            })
-                          }
-                          className="w-full px-2 py-1 border rounded-md"
-                          placeholder="Enter Question Label"
-                        />
-                        <button
-                          onClick={() =>
-                            removeQuestion(category.id, question.id)
-                          }
-                          className="text-red-500 text-sm"
-                        >
-                          Remove Question
-                        </button>
-                      </div>
-
-                      <div className="ml-4">
-                        <p className="text-sm mb-2">
-                          Selected Answer Type: {question.answerType || "None"}
-                        </p>
-                        {question.answerType === "multiple_choice" && (
-                          <div>
-                            <p className="text-sm font-medium">Options:</p>
-                            {question.options.map((option, index) => (
-                              <div
-                                key={index}
-                                className="flex items-center mb-2"
-                              >
-                                <input
-                                  type="text"
-                                  value={option}
-                                  onChange={(e) => {
-                                    const updatedOptions = [
-                                      ...question.options,
-                                    ];
-                                    updatedOptions[index] = e.target.value;
-                                    updateQuestion(category.id, question.id, {
-                                      options: updatedOptions,
-                                    });
-                                  }}
-                                  className="w-full px-2 py-1 border rounded-md"
-                                  placeholder={`Option ${index + 1}`}
-                                />
-                                <button
-                                  onClick={() => {
-                                    const updatedOptions =
-                                      question.options.filter(
-                                        (_, i) => i !== index
-                                      );
-                                    updateQuestion(category.id, question.id, {
-                                      options: updatedOptions,
-                                    });
-                                  }}
-                                  className="ml-2 text-red-500 text-sm"
-                                >
-                                  Remove
-                                </button>
-                              </div>
-                            ))}
-                            <button
-                              onClick={() => {
-                                const updatedOptions = [
-                                  ...question.options,
-                                  "",
-                                ];
-                                updateQuestion(category.id, question.id, {
-                                  options: updatedOptions,
-                                });
-                              }}
-                              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-                            >
-                              Add Option
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-
-                  <button
-                    onClick={() => addQuestion(category.id)}
-                    className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-                  >
-                    Add Question
-                  </button>
-                </div>
-              </div>
-            ))}
-
-            <button
+                Cancel
+              </Button>
+              <Button
+                type="primary"
+                loading={isLoading}
+                onClick={handleSaveChecklist}
+                className="rounded px-6 py-2 bg-blue-600 hover:bg-blue-500"
+              >
+                Save Checklist
+              </Button>
+            </div>
+          ) : (
+            <Button
+              type="primary"
               onClick={addCategory}
-              className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
+              className="rounded bg-blue-600 hover:bg-blue-500 px-6 py-2"
             >
-              Add Category
-            </button>
+              Create New Checklist
+            </Button>
+          )}
+        </div>
+
+        {/* Main Content */}
+        <div className="flex">
+          <div className="flex-1 bg-white shadow-md rounded-md p-6">
+            {isChecklistCreated ? (
+              <ChecklistForm
+                categories={categories}
+                setCategories={setCategories}
+              />
+            ) : (
+              <div className="flex justify-center items-center h-full">
+                <p className="text-gray-600">
+                  Click "Create New Checklist" to start.
+                </p>
+              </div>
+            )}
           </div>
+          <Sidebar onAddAnswerType={onAddAnswerType} />
         </div>
       </div>
+
+      {/* Popup */}
+      {showPopup && (
+        <Popup
+          message="Congratulations!"
+          description="Your checklist was created successfully."
+          onClose={() => setShowPopup(false)} // Close popup
+        />
+      )}
     </>
   );
 };
