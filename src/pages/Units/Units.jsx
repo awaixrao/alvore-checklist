@@ -1,171 +1,171 @@
-import { useState } from "react";
-import { Form, Input, Select, Button, Upload, message } from "antd";
-import { UploadOutlined } from "@ant-design/icons";
+import React, { useState, useRef } from "react";
+import { Form, Input, Select, Button, message } from "antd";
 import "antd/dist/reset.css";
 import DashboardHeader from "../../UI/Header";
 import Popup from "../../UI/PopUp";
 import unitimg from "../../assets/unitimg.png";
-
-import { usePostMutation } from "../../services/apiService"; // Adjust the path to your apiSlice
+import UnitList from "./unitsComponents/UnitList";
+import { usePostMutation, usePutMutation } from "../../services/apiService";
 
 const { Option } = Select;
 
 const Units = () => {
   const [form] = Form.useForm();
   const [showPopup, setShowPopup] = useState(false);
-  const [createCar, { isLoading }] = usePostMutation(); // Hook for the create API
+  const [editingUnit, setEditingUnit] = useState(null);
+  const [showUnitList, setShowUnitList] = useState(false);
+  const [createUnit, { isLoading: creating }] = usePostMutation();
+  const [updateUnit, { isLoading: updating }] = usePutMutation();
+  const [insuranceFile, setInsuranceFile] = useState(null); // Store insurance file as binary
+  const [vehicleCardFile, setVehicleCardFile] = useState(null); // Store vehicle card file as binary
+  const formRef = useRef(null);
 
-  // Submit handler
+  const handleFileChange = (e, setFileState) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFileState(file);
+      message.success(`${file.name} selected successfully!`);
+    } else {
+      setFileState(null);
+    }
+  };
+
   const onFinish = async (values) => {
     try {
-      // Create payload with placeholder values for images
-      const payload = {
-        unitNumber: values.unitNumber,
-        plate: values.plate,
-        brand: values.brand,
-        model: values.model,
-        color: values.color,
-        year: values.year,
-        insuranceCompany: values.insuranceCompany,
-        branchCode: values.branchCode,
-        insuranceUpload:
-          values.insuranceUpload ||
-          "https://letsenhance.io/static/8f5e523ee6b2479e26ecc91b9c25261e/1015f/MainAfter.jpg",
-        vehicleCardUpload:
-          values.vehicleCardUpload ||
-          "https://plus.unsplash.com/premium_photo-1664474619075-644dd191935f?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8aW1hZ2V8ZW58MHx8MHx8fDA%3D",
-      };
+      const formData = new FormData();
+      formData.append("unitNumber", values.unitNumber);
+      formData.append("plate", values.plate);
+      formData.append("brand", values.brand);
+      formData.append("model", values.model);
+      formData.append("color", values.color);
+      formData.append("year", values.year);
+      formData.append("insuranceCompany", values.insuranceCompany);
+      formData.append("branchCode", values.branchCode);
+      formData.append("category", values.category);
 
-      // Call the API
-      const response = await createCar({
-        path: "car/create", // API endpoint
-        body: payload,
-      }).unwrap();
+      if (insuranceFile) {
+        formData.append("insuranceUpload", insuranceFile);
+      }
+      if (vehicleCardFile) {
+        formData.append("vehicleCardUpload", vehicleCardFile);
+      }
 
-      // Handle success
-      console.log("API Response:", response);
-      message.success(response.message || "Car created successfully!");
-      setShowPopup(true); // Show popup after successful creation
+      const response = editingUnit
+        ? await updateUnit({
+            path: `car/update/${editingUnit.id}`,
+            body: formData,
+          }).unwrap()
+        : await createUnit({
+            path: "car/create",
+            body: formData,
+          }).unwrap();
+
+      message.success(response.message || "Unit saved successfully!");
+      setShowPopup(true);
+      form.resetFields();
+      setInsuranceFile(null);
+      setVehicleCardFile(null);
+      setEditingUnit(null);
     } catch (error) {
-      // Handle errors
-      console.error("Error:", error);
       message.error(
-        error?.data?.message || "Failed to create car. Please try again."
+        error?.data?.message || "Failed to save unit. Please try again."
       );
     }
   };
 
-  const onFinishFailed = (errorInfo) => {
-    console.log("Form Submission Failed:", errorInfo);
+  const handleEdit = (unit) => {
+    setEditingUnit(unit);
+
+    // Safely access branchCode and set it in the form
+    form.setFieldsValue({
+      unitNumber: unit.unitNumber,
+      plate: unit.plate,
+      brand: unit.brand,
+      model: unit.model,
+      color: unit.color,
+      year: unit.year,
+      insuranceCompany: unit.insuranceCompany,
+      branchCode: unit.branch?.branchCode || "", // Use empty string if not available
+      category: unit.category,
+    });
+
+    // Store previous file URLs to show images
+    setInsuranceFile(unit.insuranceUpload || null);
+    setVehicleCardFile(unit.vehicleCardUpload || null);
+
+    // Scroll to the form
+    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   return (
     <>
-      {/* Header */}
       <DashboardHeader image={unitimg} />
 
-      {/* Form Container */}
-      <div className="bg-white w-[85%] p-6 mx-auto mt-4">
+      <div className="bg-white w-[85%] p-6 mx-auto mt-4" ref={formRef}>
         <Form
           form={form}
           name="units_form"
           layout="vertical"
           onFinish={onFinish}
-          onFinishFailed={onFinishFailed}
           autoComplete="off"
         >
-          {/* Grid Layout */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-2">
             <Form.Item
-              label={
-                <span className="text-gray-700 font-medium">Unit Number</span>
-              }
+              label="Unit Number"
               name="unitNumber"
-              className="mb-0"
               rules={[{ required: true, message: "Unit number is required!" }]}
             >
-              <Input
-                placeholder="Unit Number"
-                className="border rounded-md py-2 px-4"
-              />
+              <Input placeholder="Enter unit number" />
             </Form.Item>
 
             <Form.Item
-              label={<span className="text-gray-700 font-medium">Plate</span>}
+              label="Plate"
               name="plate"
-              className="mb-0"
               rules={[{ required: true, message: "Plate number is required!" }]}
             >
-              <Input
-                placeholder="Plate Number"
-                className="border rounded-md py-2 px-4"
-              />
+              <Input placeholder="Enter plate number" />
             </Form.Item>
 
             <Form.Item
-              label={<span className="text-gray-700 font-medium">Brand</span>}
+              label="Brand"
               name="brand"
-              className="mb-0"
               rules={[{ required: true, message: "Brand is required!" }]}
             >
-              <Input
-                placeholder="Brand"
-                className="border rounded-md py-2 px-4"
-              />
+              <Input placeholder="Enter brand" />
             </Form.Item>
 
             <Form.Item
-              label={<span className="text-gray-700 font-medium">Model</span>}
+              label="Model"
               name="model"
-              className="mb-0"
               rules={[{ required: true, message: "Model is required!" }]}
             >
-              <Input
-                placeholder="Model"
-                className="border rounded-md py-2 px-4"
-              />
+              <Input placeholder="Enter model" />
             </Form.Item>
 
             <Form.Item
-              label={<span className="text-gray-700 font-medium">Color</span>}
+              label="Color"
               name="color"
-              className="mb-0"
               rules={[{ required: true, message: "Color is required!" }]}
             >
-              <Input
-                placeholder="Color"
-                className="border rounded-md py-2 px-4"
-              />
+              <Input placeholder="Enter color" />
             </Form.Item>
 
             <Form.Item
-              label={<span className="text-gray-700 font-medium">Year</span>}
+              label="Year"
               name="year"
-              className="mb-0"
               rules={[{ required: true, message: "Year is required!" }]}
             >
-              <Input
-                placeholder="Year"
-                className="border rounded-md py-2 px-4"
-              />
+              <Input placeholder="Enter year" />
             </Form.Item>
 
             <Form.Item
-              label={
-                <span className="text-gray-700 font-medium">
-                  Insurance Company
-                </span>
-              }
+              label="Insurance Company"
               name="insuranceCompany"
-              className="mb-0"
               rules={[
                 { required: true, message: "Insurance company is required!" },
               ]}
             >
-              <Select
-                placeholder="Select Insurance Company"
-                className="rounded-md"
-              >
+              <Select placeholder="Select insurance company">
                 <Option value="State Farm">State Farm</Option>
                 <Option value="Mapfre">Mapfre</Option>
                 <Option value="Allianz">Allianz</Option>
@@ -173,71 +173,109 @@ const Units = () => {
             </Form.Item>
 
             <Form.Item
-              label={
-                <span className="text-gray-700 font-medium">Branch Code</span>
-              }
+              label="Branch Code"
               name="branchCode"
-              className="mb-0"
-              rules={[{ required: true, message: "Branch Code is required!" }]}
+              rules={[{ required: true, message: "Branch code is required!" }]}
             >
+              <Input placeholder="Enter branch code" />
+            </Form.Item>
+
+            <Form.Item
+              label="Category"
+              name="category"
+              rules={[{ required: true, message: "Category is required!" }]}
+            >
+              <Select placeholder="Select category">
+                <Option value="Delivery Units">Delivery Units</Option>
+                <Option value="Sales Units">Sales Units</Option>
+                <Option value="Supervision Units">Supervision Units</Option>
+              </Select>
+            </Form.Item>
+
+            <Form.Item label="Upload Insurance" name="insuranceUpload">
+              {insuranceFile ? (
+                <div className="mb-2">
+                  <img
+                    src={insuranceFile}
+                    alt="Insurance"
+                    style={{
+                      width: "100px",
+                      height: "100px",
+                      objectFit: "cover",
+                      borderRadius: "5px",
+                    }}
+                  />
+                </div>
+              ) : null}
               <Input
-                placeholder="Branch"
-                className="border rounded-md py-2 px-4"
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleFileChange(e, setInsuranceFile)}
               />
             </Form.Item>
 
-            <Form.Item
-              label={
-                <span className="text-gray-700 font-medium">
-                  Upload Insurance
-                </span>
-              }
-              name="insuranceUpload"
-              className="mb-0"
-            >
-              <Upload>
-                <Button icon={<UploadOutlined />}>Upload Insurance</Button>
-              </Upload>
-            </Form.Item>
-
-            <Form.Item
-              label={
-                <span className="text-gray-700 font-medium">
-                  Upload Vehicle Card
-                </span>
-              }
-              name="vehicleCardUpload"
-              className="mb-0"
-            >
-              <Upload>
-                <Button icon={<UploadOutlined />}>Upload Vehicle Card</Button>
-              </Upload>
+            <Form.Item label="Upload Vehicle Card" name="vehicleCardUpload">
+              {vehicleCardFile ? (
+                <div className="mb-2">
+                  <img
+                    src={vehicleCardFile}
+                    alt="Vehicle Card"
+                    style={{
+                      width: "100px",
+                      height: "100px",
+                      objectFit: "cover",
+                      borderRadius: "5px",
+                    }}
+                  />
+                </div>
+              ) : null}
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleFileChange(e, setVehicleCardFile)}
+              />
             </Form.Item>
           </div>
 
-          {/* Buttons */}
           <div className="flex justify-end mt-6 space-x-4">
             <Button
               type="default"
-              htmlType="button"
-              className="rounded border border-gray-300 px-6 py-2 text-gray-600 hover:bg-gray-100"
-              onClick={() => form.resetFields()}
+              onClick={() => {
+                form.resetFields();
+                setEditingUnit(null);
+                setInsuranceFile(null);
+                setVehicleCardFile(null);
+              }}
             >
-              Return
+              Cancel
             </Button>
             <Button
               type="primary"
               htmlType="submit"
-              loading={isLoading}
-              className="rounded bg-blue-600 hover:bg-blue-500 px-6 py-2"
+              loading={creating || updating}
             >
-              Send now
+              {editingUnit ? "Update" : "Create"}
             </Button>
           </div>
         </Form>
       </div>
 
-      {/* Popup */}
+      <div className="flex justify-center mt-6">
+        <Button
+          type="default"
+          size="large"
+          onClick={() => setShowUnitList(!showUnitList)}
+        >
+          {showUnitList ? "Hide Units" : "Show Units"}
+        </Button>
+      </div>
+
+      {showUnitList && (
+        <div className="mt-10">
+          <UnitList onEdit={handleEdit} />
+        </div>
+      )}
+
       {showPopup && <Popup onClose={() => setShowPopup(false)} />}
     </>
   );

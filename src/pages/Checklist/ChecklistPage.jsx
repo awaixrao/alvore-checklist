@@ -3,6 +3,7 @@ import { Button, message } from "antd";
 import DashboardHeader from "../../UI/Header";
 import ChecklistForm from "./checklistcomponent/ChecklistForm";
 import Sidebar from "./checklistcomponent/checklistSidebar";
+import ChecklistList from "./checklistcomponent/ChecklistList"; // Import the ChecklistList component
 import Popup from "../../UI/PopUp";
 import checklist from "../../assets/checklistimg.png";
 
@@ -10,11 +11,13 @@ import { usePostMutation } from "../../services/apiService";
 
 const ChecklistPage = () => {
   const [categories, setCategories] = useState([]);
+  const [checklistPost, setChecklistPost] = useState();
   const [isChecklistCreated, setIsChecklistCreated] = useState(false);
+  const [showChecklistList, setShowChecklistList] = useState(false); // Toggle checklist list
   const [showPopup, setShowPopup] = useState(false);
+  const [editingChecklist, setEditingChecklist] = useState(null); // For editing checklist
   const [createChecklist, { isLoading }] = usePostMutation();
 
-  // Function to handle adding an answer type from Sidebar
   const onAddAnswerType = (answerType) => {
     if (!categories.length) {
       message.error("Please create a checklist first.");
@@ -44,34 +47,38 @@ const ChecklistPage = () => {
   };
 
   const handleSaveChecklist = async () => {
+    console.log("checklistPost before saving:", checklistPost); // Add this line for debugging
+
     try {
+      // Ensure branches array is not empty
+      if (
+        !checklistPost ||
+        !checklistPost.branches ||
+        checklistPost.branches.length === 0
+      ) {
+        message.error("Branches must be a non-empty array.");
+        return;
+      }
+
+      if (!checklistPost.categories || checklistPost.categories.length === 0) {
+        message.error("Please select at least one unit category.");
+        return;
+      }
+
       const token = localStorage.getItem("authToken");
 
-      // Prepare payload
-      const payload = {
-        title: categories[0]?.name || "New Checklist",
-        questions: categories[0]?.questions.map((question) => ({
-          label: question.label,
-          answerType: question.answerType,
-          isRequired: question.required,
-          choices: question.options || [],
-          instructions: question.instructions || "",
-        })),
-      };
-
-      // Call API
       const response = await createChecklist({
         path: "checklist/create",
-        body: payload,
+        body: checklistPost,
         headers: {
           Authorization: `Bearer ${token}`,
         },
       }).unwrap();
 
       message.success(response.message || "Checklist created successfully!");
-      setShowPopup(true); // Show the popup after success
-      setCategories([]); // Clear categories
-      setIsChecklistCreated(false); // Reset state
+      setShowPopup(true);
+      setCategories([]);
+      setIsChecklistCreated(false);
     } catch (error) {
       message.error(
         error?.data?.message || "Failed to create checklist. Please try again."
@@ -82,6 +89,7 @@ const ChecklistPage = () => {
   const handleCancelChecklist = () => {
     setCategories([]);
     setIsChecklistCreated(false);
+    setEditingChecklist(null);
   };
 
   const addCategory = () => {
@@ -93,6 +101,26 @@ const ChecklistPage = () => {
       },
     ]);
     setIsChecklistCreated(true);
+  };
+
+  const handleEditChecklist = (checklist) => {
+    setEditingChecklist(checklist);
+    setCategories([
+      {
+        id: Date.now(),
+        name: checklist.title,
+        questions: checklist.questions.map((q) => ({
+          id: Date.now() + Math.random(),
+          label: q.label,
+          answerType: q.answerType,
+          required: q.isRequired,
+          options: q.choices,
+          instructions: q.instructions,
+        })),
+      },
+    ]);
+    setIsChecklistCreated(true);
+    setShowChecklistList(false); // Hide the checklist list during editing
   };
 
   return (
@@ -121,13 +149,22 @@ const ChecklistPage = () => {
               </Button>
             </div>
           ) : (
-            <Button
-              type="primary"
-              onClick={addCategory}
-              className="rounded bg-blue-600 hover:bg-blue-500 px-6 py-2"
-            >
-              Create New Checklist
-            </Button>
+            <div className="flex space-x-4">
+              <Button
+                type="default"
+                onClick={() => setShowChecklistList(!showChecklistList)}
+                className="rounded border px-6 py-2"
+              >
+                {showChecklistList ? "Hide Checklists" : "Show Checklists"}
+              </Button>
+              <Button
+                type="primary"
+                onClick={addCategory}
+                className="rounded bg-blue-600 hover:bg-blue-500 px-6 py-2"
+              >
+                Create New Checklist
+              </Button>
+            </div>
           )}
         </div>
 
@@ -136,13 +173,17 @@ const ChecklistPage = () => {
           <div className="flex-1 bg-white shadow-md rounded-md p-6">
             {isChecklistCreated ? (
               <ChecklistForm
+                setChecklistPost={setChecklistPost}
                 categories={categories}
                 setCategories={setCategories}
               />
+            ) : showChecklistList ? (
+              <ChecklistList onEdit={handleEditChecklist} />
             ) : (
               <div className="flex justify-center items-center h-full">
                 <p className="text-gray-600">
-                  Click "Create New Checklist" to start.
+                  Click "Create New Checklist" to start or "Show Checklists" to
+                  view existing ones.
                 </p>
               </div>
             )}
@@ -156,7 +197,7 @@ const ChecklistPage = () => {
         <Popup
           message="Congratulations!"
           description="Your checklist was created successfully."
-          onClose={() => setShowPopup(false)} // Close popup
+          onClose={() => setShowPopup(false)}
         />
       )}
     </>

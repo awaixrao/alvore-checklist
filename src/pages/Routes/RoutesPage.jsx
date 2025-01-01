@@ -1,100 +1,108 @@
-import { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Form, Input, Button, message } from "antd";
 import "antd/dist/reset.css";
 import DashboardHeader from "../../UI/Header";
-import Popup from "../../UI/PopUp"; // Import the Popup component
-import { usePostMutation } from "../../services/apiService"; // Import the API service
+import { usePostMutation, usePutMutation } from "../../services/apiService";
+import RoutesList from "./RouteComponents/RouteList";
 import routeimg from "../../assets/routesimg.png";
 
 const RoutesPage = () => {
   const [form] = Form.useForm();
-  const [showPopup, setShowPopup] = useState(false); // State to control popup visibility
-  const [createRoute, { isLoading }] = usePostMutation(); // Hook for the create API
+  const [showRoutesList, setShowRoutesList] = useState(false); // Toggle for routes list
+  const [editingRoute, setEditingRoute] = useState(null); // State for editing route
+  const [createRoute, { isLoading: creating }] = usePostMutation(); // Create route API hook
+  const [updateRoute, { isLoading: updating }] = usePutMutation(); // Update route API hook
+  const formRef = useRef(null); // Ref for scrolling to form
 
-  // Submit handler
   const onFinish = async (values) => {
     try {
-      const token = localStorage.getItem("authToken"); // Retrieve token from localStorage
-      const payload = {
-        routeNumber: values.routeNumber,
-        economicUnit: values.economicUnit,
-        branchCode: values.branchCode, // Use branchCode instead of branch ID
-        username: values.username, // Use username instead of user ID
-      };
+      const token = localStorage.getItem("authToken");
 
-      const response = await createRoute({
-        path: "route/create", // API endpoint
-        body: payload,
-        headers: {
-          Authorization: `Bearer ${token}`, // Add the token here
-        },
-      }).unwrap();
+      const response = editingRoute
+        ? await updateRoute({
+            path: `route/update/${editingRoute.id}`,
+            body: values,
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }).unwrap()
+        : await createRoute({
+            path: "route/create",
+            body: values,
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }).unwrap();
 
-      // Handle success
-      console.log("API Response:", response);
-      message.success(response.message || "Route created successfully!");
-      setShowPopup(true); // Show the popup after successful creation
+      message.success(response.message || "Route saved successfully!");
+      setEditingRoute(null); // Clear editing state
+      form.resetFields(); // Reset form fields
+      if (!showRoutesList) setShowRoutesList(true); // Show list after save
     } catch (error) {
-      // Handle errors
-      console.error("Error:", error);
       message.error(
-        error?.data?.message || "Failed to create route. Please try again."
+        error?.data?.message || "Failed to save route. Please try again."
       );
     }
   };
 
-  const onFinishFailed = (errorInfo) => {
-    console.log("Form Submission Failed:", errorInfo);
+  const handleEdit = (route) => {
+    if (route?.id) {
+      setEditingRoute(route); // Set the current route for editing
+
+      // Map the route fields to match the form field names
+      const routeToEdit = {
+        routeNumber: route.routeNumber,
+        branchCode: route.branchCode, // Branch Code
+        economicUnit: route.economicUnit, // Economic Unit
+        username: route.user, // Set the username field from the route data
+      };
+
+      form.setFieldsValue(routeToEdit); // Populate the form with the route data
+
+      if (!showRoutesList) setShowRoutesList(true); // Ensure the list is visible
+
+      // Smooth scroll to the form
+      formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
+      message.error("Invalid route ID for editing.");
+    }
   };
 
   return (
     <>
-      {/* Header */}
       <DashboardHeader image={routeimg} />
 
-      {/* Form Container */}
-      <div className="bg-white w-[85%] p-6 mx-auto mt-4">
+      {/* Form Section */}
+      <div
+        className="bg-white w-[85%] p-6 mx-auto mt-4"
+        ref={formRef} // Attach the ref to the form container
+      >
         <Form
           form={form}
           name="routes_form"
           layout="vertical"
           onFinish={onFinish}
-          onFinishFailed={onFinishFailed}
           autoComplete="off"
         >
-          {/* Grid Layout */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-2">
-            {/* Route Number */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-4">
             <Form.Item
               label={
                 <span className="text-gray-700 font-medium">Route Number</span>
               }
               name="routeNumber"
               rules={[{ required: true, message: "Route number is required!" }]}
-              style={{ marginBottom: "12px" }}
             >
-              <Input
-                placeholder="Enter Route Number"
-                className="border rounded-md py-2 px-4"
-              />
+              <Input placeholder="Enter Route Number" />
             </Form.Item>
-
-            {/* Branch Code */}
             <Form.Item
               label={
                 <span className="text-gray-700 font-medium">Branch Code</span>
               }
               name="branchCode"
               rules={[{ required: true, message: "Branch code is required!" }]}
-              style={{ marginBottom: "12px" }}
             >
-              <Input
-                placeholder="Enter Branch Code"
-                className="border rounded-md py-2 px-4"
-              />
+              <Input placeholder="Enter Branch Code" />
             </Form.Item>
-
-            {/* Economic Unit */}
             <Form.Item
               label={
                 <span className="text-gray-700 font-medium">Economic Unit</span>
@@ -103,57 +111,57 @@ const RoutesPage = () => {
               rules={[
                 { required: true, message: "Economic unit is required!" },
               ]}
-              style={{ marginBottom: "12px" }}
             >
-              <Input
-                placeholder="Enter Economic Unit"
-                className="border rounded-md py-2 px-4"
-              />
+              <Input placeholder="Enter Economic Unit" />
             </Form.Item>
-
-            {/* Username */}
             <Form.Item
               label={
                 <span className="text-gray-700 font-medium">Username</span>
               }
               name="username"
               rules={[{ required: true, message: "Username is required!" }]}
-              style={{ marginBottom: "12px" }}
             >
-              <Input
-                placeholder="Enter Username"
-                className="border rounded-md py-2 px-4"
-              />
+              <Input placeholder="Enter Username" />
             </Form.Item>
           </div>
 
-          {/* Buttons */}
-          <div className="flex justify-end mt-4 space-x-4">
+          <div className="flex justify-end mt-6 space-x-4">
             <Button
               type="default"
-              htmlType="button"
-              className="rounded border border-gray-300 px-6 py-2 text-gray-600 hover:bg-gray-100"
-              onClick={() => form.resetFields()}
+              onClick={() => {
+                form.resetFields();
+                setEditingRoute(null); // Clear editing state
+              }}
             >
-              Return
+              Cancel
             </Button>
             <Button
               type="primary"
               htmlType="submit"
-              loading={isLoading} // Show loading spinner during API call
-              className="rounded bg-blue-600 hover:bg-blue-500 px-6 py-2"
+              loading={creating || updating}
             >
-              Send now
+              {editingRoute ? "Update" : "Create"}
             </Button>
           </div>
         </Form>
       </div>
 
-      {/* Popup */}
-      {showPopup && (
-        <Popup
-          onClose={() => setShowPopup(false)} // Close the popup when button is clicked
-        />
+      {/* Toggle Routes List Button */}
+      <div className="flex justify-center mt-6">
+        <Button
+          type="default"
+          size="large"
+          onClick={() => setShowRoutesList(!showRoutesList)} // Toggle routes list
+        >
+          {showRoutesList ? "Hide Routes" : "Show Routes"}
+        </Button>
+      </div>
+
+      {/* Routes List */}
+      {showRoutesList && (
+        <div className="mt-10">
+          <RoutesList onEdit={handleEdit} />
+        </div>
       )}
     </>
   );

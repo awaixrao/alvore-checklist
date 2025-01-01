@@ -1,177 +1,161 @@
-import { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Form, Input, Select, Button, message } from "antd";
 import "antd/dist/reset.css";
 import DashboardHeader from "../../UI/Header";
-import Popup from "../../UI/PopUp"; // Import the Popup component
-import { usePostMutation } from "../../services/apiService"; // Import the API service
+import { usePostMutation, usePutMutation } from "../../services/apiService";
+import BranchList from "./branchescomponents/BranchList";
 import branchimg from "../../assets/branchesimg.png";
 
 const { Option } = Select;
 
 const Branches = () => {
   const [form] = Form.useForm();
-  const [showPopup, setShowPopup] = useState(false); // State to control popup visibility
-  const [createBranch, { isLoading }] = usePostMutation(); // Hook for the create API
+  const [showBranchList, setShowBranchList] = useState(false); // Toggle for branch list
+  const [editingBranch, setEditingBranch] = useState(null); // State for branch being edited
+  const [createBranch, { isLoading: creating }] = usePostMutation(); // Create branch hook
+  const [updateBranch, { isLoading: updating }] = usePutMutation(); // Update branch hook
+  const formRef = useRef(null); // Ref for the form
 
-  // Submit handler
   const onFinish = async (values) => {
     try {
-      const token = localStorage.getItem("authToken"); // Retrieve token from localStorage or your auth state
-      const response = await createBranch({
-        path: "branch/create", // API endpoint
-        body: values,
-        headers: {
-          Authorization: `Bearer ${token}`, // Add the token here
-        },
-      }).unwrap();
+      const token = localStorage.getItem("authToken");
 
-      // Handle success
-      console.log("API Response:", response);
-      message.success(response.message || "Branch created successfully!");
-      setShowPopup(true); // Show the popup after successful creation
+      const response = editingBranch
+        ? await updateBranch({
+            path: `branch/update/${editingBranch.id}`, // Use correct `id`
+            body: values,
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }).unwrap()
+        : await createBranch({
+            path: "branch/create",
+            body: values,
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }).unwrap();
+
+      message.success(response.message || "Branch saved successfully!");
+      setEditingBranch(null); // Clear editing state
+      form.resetFields(); // Reset form
+      if (!showBranchList) setShowBranchList(true); // Show list after save
     } catch (error) {
-      // Handle errors
-      console.error("Error:", error);
       message.error(
-        error?.data?.message || "Failed to create branch. Please try again."
+        error?.data?.message || "Failed to save branch. Please try again."
       );
     }
   };
 
-  const onFinishFailed = (errorInfo) => {
-    console.log("Form Submission Failed:", errorInfo);
+  const handleEdit = (branch) => {
+    if (branch?.id) {
+      setEditingBranch(branch); // Set branch for editing
+      form.setFieldsValue(branch); // Populate form with branch data
+      if (!showBranchList) setShowBranchList(true); // Ensure list is visible
+
+      // Scroll to form
+      formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
+      message.error("Invalid branch ID for editing.");
+    }
   };
 
   return (
     <>
-      {/* Header */}
       <DashboardHeader image={branchimg} />
 
-      {/* Form Container */}
-      <div className="bg-white w-[85%] p-6 mx-auto mt-4">
+      {/* Form Section */}
+      <div
+        className="bg-white w-[85%] p-6 mx-auto mt-4"
+        ref={formRef} // Attach the ref to the form container
+      >
         <Form
           form={form}
           name="branch_form"
           layout="vertical"
           onFinish={onFinish}
-          onFinishFailed={onFinishFailed}
           autoComplete="off"
         >
-          {/* Grid Layout */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-4">
             <Form.Item
-              label={
-                <span className="text-gray-700 font-medium">Branch code</span>
-              }
+              label="Branch Code"
               name="branchCode"
               rules={[{ required: true, message: "Branch code is required!" }]}
-              className="ant-form-item-required m-0"
             >
-              <Input
-                placeholder="Code"
-                className="border rounded-md py-2 px-4"
-              />
+              <Input placeholder="Enter branch code" />
             </Form.Item>
-
             <Form.Item
-              label={
-                <span className="text-gray-700 font-medium">Branch name</span>
-              }
+              label="Branch Name"
               name="branchName"
               rules={[{ required: true, message: "Branch name is required!" }]}
-              className="ant-form-item-required m-0"
             >
-              <Input
-                placeholder="Name"
-                className="border rounded-md py-2 px-4"
-              />
+              <Input placeholder="Enter branch name" />
             </Form.Item>
-
             <Form.Item
-              label={
-                <span className="text-gray-700 font-medium">
-                  Branch address
-                </span>
-              }
+              label="Branch Address"
               name="branchAddress"
               rules={[
                 { required: true, message: "Branch address is required!" },
               ]}
-              className="ant-form-item-required m-0"
             >
-              <Input
-                placeholder="Address"
-                className="border rounded-md py-2 px-4"
-              />
+              <Input placeholder="Enter branch address" />
             </Form.Item>
-
             <Form.Item
-              label={<span className="text-gray-700 font-medium">Country</span>}
+              label="Country"
               name="country"
               rules={[{ required: true, message: "Country is required!" }]}
-              className="ant-form-item-required m-0"
             >
-              <Select placeholder="Select" className="rounded-md">
+              <Select placeholder="Select country">
                 <Option value="Mexico">Mexico</Option>
                 <Option value="Guatemala">Guatemala</Option>
                 <Option value="El Salvador">El Salvador</Option>
               </Select>
             </Form.Item>
-
-            <Form.Item
-              label={<span className="text-gray-700 font-medium">State</span>}
-              name="state"
-              className="m-0"
-            >
-              <Input
-                placeholder="State"
-                className="border rounded-md py-2 px-4"
-              />
+            <Form.Item label="State" name="state">
+              <Input placeholder="Enter state" />
             </Form.Item>
-
-            <Form.Item
-              label={
-                <span className="text-gray-700 font-medium">
-                  Branch details
-                </span>
-              }
-              name="branchDetails"
-              className="m-0"
-            >
-              <Input
-                placeholder="Details"
-                className="border rounded-md py-2 px-4"
-              />
+            <Form.Item label="Branch Details" name="branchDetails">
+              <Input placeholder="Enter additional details" />
             </Form.Item>
           </div>
 
-          {/* Buttons */}
           <div className="flex justify-end mt-6 space-x-4">
             <Button
               type="default"
-              htmlType="button"
-              className="rounded border border-gray-300 px-6 py-4 text-gray-600 hover:bg-gray-100"
-              onClick={() => form.resetFields()}
+              onClick={() => {
+                form.resetFields();
+                setEditingBranch(null); // Clear editing state
+              }}
             >
-              Return
+              Cancel
             </Button>
             <Button
               type="primary"
               htmlType="submit"
-              loading={isLoading}
-              className="rounded bg-blue-600 hover:bg-blue-500 px-6 py-4"
+              loading={creating || updating}
             >
-              Send now
+              {editingBranch ? "Update" : "Create"}
             </Button>
           </div>
         </Form>
       </div>
 
-      {/* Popup */}
-      {showPopup && (
-        <Popup
-          onClose={() => setShowPopup(false)} // Close the popup when button is clicked
-        />
+      {/* Toggle Branch List Button */}
+      <div className="flex justify-center mt-6">
+        <Button
+          type="default"
+          size="large"
+          onClick={() => setShowBranchList(!showBranchList)} // Toggle branch list
+        >
+          {showBranchList ? "Hide Branches" : "Show Branches"}
+        </Button>
+      </div>
+
+      {/* Branch List */}
+      {showBranchList && (
+        <div className="mt-10">
+          <BranchList onEdit={handleEdit} />
+        </div>
       )}
     </>
   );

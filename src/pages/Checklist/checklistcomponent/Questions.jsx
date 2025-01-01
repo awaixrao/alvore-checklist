@@ -3,6 +3,9 @@ import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css"; // Import Quill CSS
 import {
   FaTimes,
+  FaCheckCircle,
+  FaExclamationCircle,
+  FaTimesCircle,
   FaListAlt,
   FaBars,
   FaRegFileAlt,
@@ -13,8 +16,15 @@ import {
   FaCameraRetro,
 } from "react-icons/fa";
 
-// Define the icons object for mapping answer types
-const icons = {
+// Define the icons for status
+const statusIcons = {
+  ok: <FaCheckCircle className="text-green-500" />,
+  not_ok: <FaTimesCircle className="text-red-500" />,
+  warning: <FaExclamationCircle className="text-yellow-500" />,
+};
+
+// Define the icons object for answer types
+const answerTypeIcons = {
   mcqs: <FaListAlt />,
   dropdown: <FaBars />,
   text: <FaRegFileAlt />,
@@ -26,6 +36,15 @@ const icons = {
 };
 
 const Question = ({ question, updateQuestion, onRemove }) => {
+  const updateOptionStatus = (index, status) => {
+    const updatedOptions = [...question.options];
+    updatedOptions[index] = {
+      ...updatedOptions[index],
+      icon: status,
+    };
+    updateQuestion({ options: updatedOptions });
+  };
+
   return (
     <div className="p-4 border rounded-md mb-4 bg-white shadow-md">
       {/* Top Header */}
@@ -44,7 +63,7 @@ const Question = ({ question, updateQuestion, onRemove }) => {
         {/* Right: Answer Type and Cancel Button */}
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2 bg-gray-100 px-3 py-1 rounded-md">
-            {icons[question.answerType] || null}
+            {answerTypeIcons[question.answerType] || null}
             <span className="text-sm text-gray-700">
               {question.answerType || "Select Answer"}
             </span>
@@ -80,17 +99,51 @@ const Question = ({ question, updateQuestion, onRemove }) => {
           </label>
           {question.options.map((option, index) => (
             <div key={index} className="flex items-center mb-2">
+              {/* Option Input */}
               <input
                 type="text"
-                value={option}
+                value={option.text}
                 onChange={(e) => {
                   const updatedOptions = [...question.options];
-                  updatedOptions[index] = e.target.value;
+                  updatedOptions[index] = {
+                    ...updatedOptions[index],
+                    text: e.target.value,
+                  };
                   updateQuestion({ options: updatedOptions });
                 }}
                 className="w-full px-3 py-2 border rounded-md"
                 placeholder={`Option ${index + 1}`}
               />
+
+              {/* Icons */}
+              <div className="flex space-x-2 ml-4">
+                <button
+                  onClick={() => updateOptionStatus(index, "ok")}
+                  className={`p-2 rounded-full ${
+                    option.icon === "ok" ? "bg-green-100" : "bg-gray-100"
+                  }`}
+                >
+                  {statusIcons.ok}
+                </button>
+                <button
+                  onClick={() => updateOptionStatus(index, "not_ok")}
+                  className={`p-2 rounded-full ${
+                    option.icon === "not_ok" ? "bg-red-100" : "bg-gray-100"
+                  }`}
+                >
+                  {statusIcons.not_ok}
+                </button>
+                <button
+                  onClick={() => updateOptionStatus(index, "warning")}
+                  className={`p-2 rounded-full ${
+                    option.icon === "warning" ? "bg-yellow-100" : "bg-gray-100"
+                  }`}
+                >
+                  {statusIcons.warning}
+                </button>
+              </div>
+
+              {/* Remove Option */}
               <button
                 onClick={() => {
                   const updatedOptions = question.options.filter(
@@ -107,7 +160,7 @@ const Question = ({ question, updateQuestion, onRemove }) => {
           <button
             onClick={() =>
               updateQuestion({
-                options: [...question.options, ""],
+                options: [...question.options, { text: "", icon: "ok" }],
               })
             }
             className="mt-2 w-32 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
