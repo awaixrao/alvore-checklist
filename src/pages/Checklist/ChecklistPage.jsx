@@ -47,24 +47,21 @@ const ChecklistPage = () => {
   };
 
   const handleSaveChecklist = async () => {
-    console.log("checklistPost before saving:", checklistPost); // Add this line for debugging
+    if (
+      !checklistPost ||
+      !checklistPost.branches ||
+      checklistPost.branches.length === 0
+    ) {
+      message.error("Branches must be a non-empty array.");
+      return;
+    }
+
+    if (!checklistPost.categories || checklistPost.categories.length === 0) {
+      message.error("Please select at least one unit category.");
+      return;
+    }
 
     try {
-      // Ensure branches array is not empty
-      if (
-        !checklistPost ||
-        !checklistPost.branches ||
-        checklistPost.branches.length === 0
-      ) {
-        message.error("Branches must be a non-empty array.");
-        return;
-      }
-
-      if (!checklistPost.categories || checklistPost.categories.length === 0) {
-        message.error("Please select at least one unit category.");
-        return;
-      }
-
       const token = localStorage.getItem("authToken");
 
       const response = await createChecklist({

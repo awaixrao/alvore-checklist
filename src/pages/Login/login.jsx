@@ -17,11 +17,11 @@ const Login = () => {
         body: values,
       }).unwrap();
 
-      console.log("Login API response:", response); // Debug response
+      "Login API response:", response; // Debug response
 
       // Check user role and store authentication data
       if (response?.user?.role === "admin") {
-        console.log("Response is valid, navigating to /");
+        ("Response is valid, navigating to /");
 
         // Dispatch to Redux store
         dispatch(login(response));
@@ -32,9 +32,9 @@ const Login = () => {
 
         message.success("Login successful!");
 
-        console.log("Before navigating to /");
+        ("Before navigating to /");
         navigate("/"); // Redirect to dashboard
-        console.log("After navigating to /");
+        ("After navigating to /");
       } else {
         message.error("Access denied. Only admins can log in.");
       }

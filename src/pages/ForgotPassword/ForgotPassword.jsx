@@ -20,7 +20,6 @@ const ForgotPassword = () => {
       }).unwrap();
 
       // Handle success
-      console.log("API Response:", response);
       message.success(response.message || "OTP sent successfully!");
       navigate("/verification", { state: { phone: values.phone } }); // Passing phone number to the verification page
     } catch (error) {

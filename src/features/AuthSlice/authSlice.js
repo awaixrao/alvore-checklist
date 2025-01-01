@@ -17,7 +17,6 @@ const authSlice = createSlice({
       state.token = action.payload.token; // Token
       state.isAuthenticated = true;
       state.error = null;
-      console.log("payload", action.payload);
     },
     logout: (state) => {
       state.user = null;

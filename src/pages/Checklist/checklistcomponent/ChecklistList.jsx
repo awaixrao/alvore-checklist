@@ -23,7 +23,7 @@ const ChecklistList = ({ onEdit }) => {
       questionsCount: checklist.questions?.length || 0, // Count of questions
     })) || [];
 
-  console.log("Mapped Checklists:", checklists); // Debug the mapped data
+  "Mapped Checklists:", checklists; // Debug the mapped data
 
   // Handle checklist deletion
   const handleDelete = async (id) => {

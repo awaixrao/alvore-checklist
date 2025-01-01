@@ -60,9 +60,7 @@ const Users = () => {
     }
   };
 
-  const onFinishFailed = (errorInfo) => {
-    console.log("Form Submission Failed:", errorInfo);
-  };
+  const onFinishFailed = (errorInfo) => {};
 
   return (
     <div className="min-h-screen">

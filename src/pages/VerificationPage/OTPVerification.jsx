@@ -52,7 +52,6 @@ const OTPVerification = () => {
         }).unwrap();
 
         // Handle success
-        console.log("API Response:", response);
         if (response?.data?.data?.valid) {
           message.success("OTP verified successfully!");
           navigate("/reset-password", { state: { phone: phoneNumber } });

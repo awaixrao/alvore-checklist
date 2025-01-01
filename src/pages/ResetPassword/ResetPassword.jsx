@@ -26,7 +26,7 @@ const ResetPassword = () => {
       }).unwrap();
 
       // Handle success
-      console.log("API Response:", response);
+      "API Response:", response;
       message.success("Password reset successfully!");
       navigate("/login"); // Navigate to login page after password reset
     } catch (error) {

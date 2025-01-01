@@ -37,7 +37,6 @@ const baseQuery = fetchBaseQuery({
       headers.set("Authorization", `Bearer ${token}`);
     }
     headers?.set("Accept", "application/json");
-    console.log("token", token);
 
     return headers;
   },
