@@ -1,6 +1,6 @@
 import React from "react";
 import ReactQuill from "react-quill";
-import "react-quill/dist/quill.snow.css"; // Import Quill CSS
+import "react-quill/dist/quill.snow.css";
 import {
   FaTimes,
   FaCheckCircle,
@@ -38,23 +38,23 @@ const answerTypeIcons = {
 const Question = ({ question, updateQuestion, onRemove }) => {
   const handleAddChoice = () => {
     const updatedOptions = [
-      ...(question.options || []),
+      ...(question.choices || []),
       { text: "", icon: "ok" },
     ];
-    updateQuestion({ options: updatedOptions });
+    updateQuestion({ choices: updatedOptions });
   };
 
   const handleOptionChange = (index, key, value) => {
-    const updatedOptions = [...(question.options || [])];
+    const updatedOptions = [...(question.choices || [])];
     updatedOptions[index] = { ...updatedOptions[index], [key]: value };
-    updateQuestion({ options: updatedOptions });
+    updateQuestion({ choices: updatedOptions });
   };
 
   const handleRemoveOption = (index) => {
-    const updatedOptions = (question.options || []).filter(
+    const updatedOptions = (question.choices || []).filter(
       (_, i) => i !== index
     );
-    updateQuestion({ options: updatedOptions });
+    updateQuestion({ choices: updatedOptions });
   };
 
   return (
@@ -100,13 +100,13 @@ const Question = ({ question, updateQuestion, onRemove }) => {
         />
       </div>
 
-      {/* Options for Dropdown or MCQs */}
+      {/* Choices Section for Dropdown or MCQs */}
       {["mcqs", "dropdown"].includes(question.answerType) && (
         <div className="flex flex-col mb-4">
           <label className="text-sm font-medium text-gray-700 mb-2">
             Add Options
           </label>
-          {(question.options || []).map((option, index) => (
+          {(question.choices || []).map((option, index) => (
             <div key={index} className="flex items-center mb-2">
               <input
                 type="text"
@@ -117,32 +117,6 @@ const Question = ({ question, updateQuestion, onRemove }) => {
                 className="w-full px-3 py-2 border rounded-md"
                 placeholder={`Option ${index + 1}`}
               />
-              <div className="flex space-x-2 ml-4">
-                <button
-                  onClick={() => handleOptionChange(index, "icon", "ok")}
-                  className={`p-2 rounded-full ${
-                    option.icon === "ok" ? "bg-green-100" : "bg-gray-100"
-                  }`}
-                >
-                  {statusIcons.ok}
-                </button>
-                <button
-                  onClick={() => handleOptionChange(index, "icon", "not_ok")}
-                  className={`p-2 rounded-full ${
-                    option.icon === "not_ok" ? "bg-red-100" : "bg-gray-100"
-                  }`}
-                >
-                  {statusIcons.not_ok}
-                </button>
-                <button
-                  onClick={() => handleOptionChange(index, "icon", "warning")}
-                  className={`p-2 rounded-full ${
-                    option.icon === "warning" ? "bg-yellow-100" : "bg-gray-100"
-                  }`}
-                >
-                  {statusIcons.warning}
-                </button>
-              </div>
               <button
                 onClick={() => handleRemoveOption(index)}
                 className="ml-2 text-red-500 hover:text-red-600 text-sm"
@@ -161,16 +135,20 @@ const Question = ({ question, updateQuestion, onRemove }) => {
       )}
 
       {/* Instructions Field */}
-      <div className="flex flex-col mb-4">
-        <label className="text-sm font-medium text-gray-700 mb-2">
-          Instructions
-        </label>
-        <ReactQuill
-          value={question.instructions || ""}
-          onChange={(value) => updateQuestion({ instructions: value })}
-          className="bg-white"
-        />
-      </div>
+      {["dropdown", "image", "takepicture", "date"].includes(
+        question.answerType
+      ) && (
+        <div className="flex flex-col mb-4">
+          <label className="text-sm font-medium text-gray-700 mb-2">
+            Instructions
+          </label>
+          <ReactQuill
+            value={question.instruction || ""}
+            onChange={(value) => updateQuestion({ instruction: value })}
+            className="bg-white"
+          />
+        </div>
+      )}
     </div>
   );
 };

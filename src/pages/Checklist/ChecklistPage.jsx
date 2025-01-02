@@ -119,6 +119,10 @@ const ChecklistPage = () => {
   };
 
   const handleEditChecklist = (checklist) => {
+    console.log("checklist", checklist);
+    console.log("categories edit", categories);
+    console.log("editingChecklist", editingChecklist);
+
     setEditingChecklist(checklist);
     setCategories([
       {
@@ -138,7 +142,7 @@ const ChecklistPage = () => {
     setShowChecklistList(false);
   };
 
-  console.log("categories main page", categories);
+  console.log("categories", categories);
 
   return (
     <>
@@ -189,6 +193,8 @@ const ChecklistPage = () => {
                 setChecklistPost={setChecklistPost}
                 categories={categories}
                 setCategories={setCategories}
+                checklistPost={checklistPost}
+                editingChecklist={editingChecklist}
               />
             ) : showChecklistList ? (
               <ChecklistList onEdit={handleEditChecklist} />

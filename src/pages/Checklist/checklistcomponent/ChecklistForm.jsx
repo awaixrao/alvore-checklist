@@ -6,11 +6,30 @@ const ChecklistForm = ({
   setCategories,
   setChecklistPost,
   checklistPost,
+  editingChecklist,
 }) => {
   const [selectedUnitCategories, setSelectedUnitCategories] = useState([]);
   const [branchInput, setBranchInput] = useState("");
   const [checklistTitle, setChecklistTitle] = useState("");
   const [branches, setBranches] = useState([]);
+
+  // Populate form fields when editingChecklist changes
+  useEffect(() => {
+    if (editingChecklist) {
+      setChecklistTitle(editingChecklist.title || "");
+      setSelectedUnitCategories(editingChecklist.categories || []);
+      setBranches(editingChecklist.branches || []);
+      setCategories(
+        Array.isArray(editingChecklist.categories)
+          ? editingChecklist?.categories?.map((cat, index) => ({
+              id: index,
+              name: cat,
+              questions: editingChecklist.questions || [],
+            }))
+          : []
+      );
+    }
+  }, [editingChecklist, setCategories]);
 
   useEffect(() => {
     setChecklistPost((prev) => ({
@@ -21,21 +40,6 @@ const ChecklistForm = ({
     }));
   }, [checklistTitle, selectedUnitCategories, branches, setChecklistPost]);
 
-  // const updateQuestion = (categoryId, questionId, updatedData) => {
-  //   setCategories((prev) =>
-  //     prev.map((cat) =>
-  //       cat.id === categoryId
-  //         ? {
-  //             ...cat,
-  //             questions: cat.questions.map((q) =>
-  //               q.id === questionId ? { ...q, ...updatedData } : q
-  //             ),
-  //           }
-  //         : cat
-  //     )
-  //   );
-  // };
-
   const updateQuestion = (categoryId, questionId, updatedData) => {
     setCategories((prev) =>
       prev.map((cat) =>
@@ -43,48 +47,11 @@ const ChecklistForm = ({
           ? {
               ...cat,
               questions: cat.questions.map((q) =>
-                q.id === questionId
-                  ? {
-                      ...q,
-                      ...updatedData,
-                      choices: updatedData.options || q.choices || [], // Map options to choices
-                    }
-                  : q
+                q.id === questionId ? { ...q, ...updatedData } : q
               ),
             }
           : cat
       )
-    );
-  };
-
-  console.log("Updated categories with choices:", categories);
-
-  console.log("categories", categories);
-
-  const addBranch = () => {
-    if (branchInput.trim() && !branches.includes(branchInput.trim())) {
-      const newBranches = [...branches, branchInput.trim()];
-      setBranches(newBranches);
-      setBranchInput("");
-    } else {
-      alert("Branch code is either empty or already added.");
-    }
-  };
-
-  const removeBranch = (branchToRemove) => {
-    setBranches((prev) => prev.filter((branch) => branch !== branchToRemove));
-  };
-
-  const handleCategorySelection = (e) => {
-    const selected = e.target.value;
-    if (selected && !selectedUnitCategories.includes(selected)) {
-      setSelectedUnitCategories((prev) => [...prev, selected]);
-    }
-  };
-
-  const removeUnitCategory = (categoryToRemove) => {
-    setSelectedUnitCategories((prev) =>
-      prev.filter((cat) => cat !== categoryToRemove)
     );
   };
 
@@ -104,12 +71,18 @@ const ChecklistForm = ({
             placeholder="Enter the checklist title"
           />
         </div>
+
         <div className="flex flex-col mb-6">
           <label className="text-lg font-semibold text-gray-700 mb-3">
             Select Unit Categories
           </label>
           <select
-            onChange={handleCategorySelection}
+            onChange={(e) => {
+              const selected = e.target.value;
+              if (selected && !selectedUnitCategories.includes(selected)) {
+                setSelectedUnitCategories((prev) => [...prev, selected]);
+              }
+            }}
             className="w-full px-4 py-2 border border-gray-300 rounded-md"
           >
             <option value="">Select a category</option>
@@ -118,17 +91,22 @@ const ChecklistForm = ({
             <option value="Supervision Units">Supervision Units</option>
           </select>
           <div className="flex flex-wrap mt-3">
-            {selectedUnitCategories.map((cat) => (
+            {selectedUnitCategories?.map((cat) => (
               <span
                 key={cat}
                 className="bg-blue-200 text-blue-700 px-3 py-1 rounded-lg mr-2 mb-2 cursor-pointer"
-                onClick={() => removeUnitCategory(cat)}
+                onClick={() =>
+                  setSelectedUnitCategories((prev) =>
+                    prev.filter((item) => item !== cat)
+                  )
+                }
               >
                 {cat} &times;
               </span>
             ))}
           </div>
         </div>
+
         <div className="flex flex-col mb-6">
           <label className="text-lg font-semibold text-gray-700 mb-3">
             Add Branches
@@ -142,27 +120,38 @@ const ChecklistForm = ({
               placeholder="Enter branch code"
             />
             <button
-              onClick={addBranch}
+              onClick={() => {
+                if (
+                  branchInput.trim() &&
+                  !branches.includes(branchInput.trim())
+                ) {
+                  setBranches((prev) => [...prev, branchInput.trim()]);
+                  setBranchInput("");
+                }
+              }}
               className="px-4 py-2 bg-green-500 text-white rounded-lg"
             >
               Add
             </button>
           </div>
           <div className="flex flex-wrap mt-3">
-            {branches.map((branch) => (
+            {branches?.map((branch) => (
               <span
                 key={branch}
                 className="bg-gray-200 text-gray-700 px-3 py-1 rounded-lg mr-2 mb-2 cursor-pointer"
-                onClick={() => removeBranch(branch)}
+                onClick={() =>
+                  setBranches((prev) => prev.filter((item) => item !== branch))
+                }
               >
                 {branch} &times;
               </span>
             ))}
           </div>
         </div>
-        {categories.map((category) => (
+
+        {categories?.map((category) => (
           <div key={category.id} className="mb-6">
-            {category.questions.map((question) => (
+            {category?.questions?.map((question) => (
               <Question
                 key={question.id}
                 question={question}

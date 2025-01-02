@@ -20,10 +20,9 @@ const ChecklistList = ({ onEdit }) => {
         "N/A", // Join branch codes
       categories: checklist.categories?.join(", ") || "N/A", // Join categories
       createdBy: `${checklist.createdBy.firstname} ${checklist.createdBy.lastname}`, // Combine firstname and lastname
+      questions: checklist.questions || [], // Full questions array
       questionsCount: checklist.questions?.length || 0, // Count of questions
     })) || [];
-
-  "Mapped Checklists:", checklists; // Debug the mapped data
 
   // Handle checklist deletion
   const handleDelete = async (id) => {
