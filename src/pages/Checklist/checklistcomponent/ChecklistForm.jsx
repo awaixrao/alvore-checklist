@@ -16,9 +16,9 @@ const ChecklistForm = ({
   // Populate form fields when editingChecklist changes
   useEffect(() => {
     if (editingChecklist) {
-      setChecklistTitle(editingChecklist.title || "");
-      setSelectedUnitCategories(editingChecklist.categories || []);
-      setBranches(editingChecklist.branches || []);
+      setChecklistTitle(editingChecklist?.title || "");
+      setSelectedUnitCategories(editingChecklist?.categories || []);
+      setBranches(editingChecklist?.branches || []);
       setCategories(
         Array.isArray(editingChecklist.categories)
           ? editingChecklist?.categories?.map((cat, index) => ({
@@ -30,6 +30,10 @@ const ChecklistForm = ({
       );
     }
   }, [editingChecklist, setCategories]);
+  console.log("at the form page", editingChecklist);
+  console.log("branchInput", branchInput);
+  console.log("checklistTitle", checklistTitle);
+  console.log(selectedUnitCategories);
 
   useEffect(() => {
     setChecklistPost((prev) => ({

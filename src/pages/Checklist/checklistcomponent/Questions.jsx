@@ -106,31 +106,60 @@ const Question = ({ question, updateQuestion, onRemove }) => {
           <label className="text-sm font-medium text-gray-700 mb-2">
             Add Options
           </label>
-          {(question.choices || []).map((option, index) => (
-            <div key={index} className="flex items-center mb-2">
-              <input
-                type="text"
-                value={option.text}
-                onChange={(e) =>
-                  handleOptionChange(index, "text", e.target.value)
-                }
-                className="w-full px-3 py-2 border rounded-md"
-                placeholder={`Option ${index + 1}`}
-              />
+          {["mcqs", "dropdown"].includes(question.answerType) && (
+            <div className="flex flex-col mb-4">
+              {(question.choices || []).map((option, index) => (
+                <div key={index} className="flex items-center mb-2">
+                  {/* Text input for choice */}
+                  <input
+                    type="text"
+                    value={option.text}
+                    onChange={(e) =>
+                      handleOptionChange(index, "text", e.target.value)
+                    }
+                    className="w-full px-3 py-2 border rounded-md"
+                    placeholder={`Option ${index + 1}`}
+                  />
+
+                  {/* Icons for selection */}
+                  <div className="flex ml-2 space-x-2">
+                    {["ok", "not_ok", "warning"].map((iconValue) => (
+                      <span
+                        key={iconValue}
+                        onClick={() =>
+                          handleOptionChange(index, "icon", iconValue)
+                        }
+                        className={`cursor-pointer text-xl ${
+                          option.icon === iconValue
+                            ? "text-blue-500"
+                            : "text-gray-500"
+                        }`}
+                      >
+                        {statusIcons[iconValue]}
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* Display selected icon */}
+                  <span className="ml-2">{statusIcons[option.icon]}</span>
+
+                  {/* Remove button */}
+                  <button
+                    onClick={() => handleRemoveOption(index)}
+                    className="ml-2 text-red-500 hover:text-red-600 text-sm"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
               <button
-                onClick={() => handleRemoveOption(index)}
-                className="ml-2 text-red-500 hover:text-red-600 text-sm"
+                onClick={handleAddChoice}
+                className="mt-2 w-32 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
               >
-                Remove
+                Add Choices
               </button>
             </div>
-          ))}
-          <button
-            onClick={handleAddChoice}
-            className="mt-2 w-32 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-          >
-            Add Choices
-          </button>
+          )}
         </div>
       )}
 
