@@ -3,7 +3,7 @@ import { Button, message } from "antd";
 import DashboardHeader from "../../UI/Header";
 import ChecklistForm from "./checklistcomponent/ChecklistForm";
 import Sidebar from "./checklistcomponent/checklistSidebar";
-import ChecklistList from "./checklistcomponent/ChecklistList"; // Import the ChecklistList component
+import ChecklistList from "./checklistcomponent/ChecklistList";
 import Popup from "../../UI/PopUp";
 import checklist from "../../assets/checklistimg.png";
 
@@ -11,11 +11,11 @@ import { usePostMutation } from "../../services/apiService";
 
 const ChecklistPage = () => {
   const [categories, setCategories] = useState([]);
-  const [checklistPost, setChecklistPost] = useState();
+  const [checklistPost, setChecklistPost] = useState({});
   const [isChecklistCreated, setIsChecklistCreated] = useState(false);
-  const [showChecklistList, setShowChecklistList] = useState(false); // Toggle checklist list
+  const [showChecklistList, setShowChecklistList] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
-  const [editingChecklist, setEditingChecklist] = useState(null); // For editing checklist
+  const [editingChecklist, setEditingChecklist] = useState(null);
   const [createChecklist, { isLoading }] = usePostMutation();
 
   const onAddAnswerType = (answerType) => {
@@ -35,9 +35,9 @@ const ChecklistPage = () => {
                   id: Date.now(),
                   label: "",
                   answerType,
-                  required: false,
-                  options: [],
-                  instructions: "", // Default empty instructions
+                  isRequired: false,
+                  choices: [],
+                  instruction: "",
                 },
               ],
             }
@@ -47,17 +47,35 @@ const ChecklistPage = () => {
   };
 
   const handleSaveChecklist = async () => {
-    if (
-      !checklistPost ||
-      !checklistPost.branches ||
-      checklistPost.branches.length === 0
-    ) {
-      message.error("Branches must be a non-empty array.");
+    const { title, branches, categories: unitCategories } = checklistPost;
+
+    if (!title?.trim()) {
+      message.error("Checklist title is required.");
       return;
     }
 
-    if (!checklistPost.categories || checklistPost.categories.length === 0) {
+    if (!branches || branches.length === 0) {
+      message.error("Please add at least one branch.");
+      return;
+    }
+
+    if (!unitCategories || unitCategories.length === 0) {
       message.error("Please select at least one unit category.");
+      return;
+    }
+
+    const questions = categories.flatMap((category) =>
+      category.questions.map((q) => ({
+        label: q.label,
+        answerType: q.answerType,
+        isRequired: q.isRequired || false,
+        instruction: q.instruction || "",
+        choices: q.choices || [],
+      }))
+    );
+
+    if (!questions || questions.length === 0) {
+      message.error("Please add at least one question.");
       return;
     }
 
@@ -66,7 +84,7 @@ const ChecklistPage = () => {
 
       const response = await createChecklist({
         path: "checklist/create",
-        body: checklistPost,
+        body: { ...checklistPost, questions },
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -110,22 +128,22 @@ const ChecklistPage = () => {
           id: Date.now() + Math.random(),
           label: q.label,
           answerType: q.answerType,
-          required: q.isRequired,
-          options: q.choices,
-          instructions: q.instructions,
+          isRequired: q.isRequired,
+          choices: q.choices || [],
+          instruction: q.instruction || "",
         })),
       },
     ]);
     setIsChecklistCreated(true);
-    setShowChecklistList(false); // Hide the checklist list during editing
+    setShowChecklistList(false);
   };
+
+  console.log("categories main page", categories);
 
   return (
     <>
       <DashboardHeader image={checklist} />
-
       <div className="p-6 bg-gray-100 min-h-screen">
-        {/* Header with Buttons */}
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-xl font-bold">New Inspection Items</h1>
           {isChecklistCreated ? (
@@ -164,8 +182,6 @@ const ChecklistPage = () => {
             </div>
           )}
         </div>
-
-        {/* Main Content */}
         <div className="flex">
           <div className="flex-1 bg-white shadow-md rounded-md p-6">
             {isChecklistCreated ? (
@@ -188,8 +204,6 @@ const ChecklistPage = () => {
           <Sidebar onAddAnswerType={onAddAnswerType} />
         </div>
       </div>
-
-      {/* Popup */}
       {showPopup && (
         <Popup
           message="Congratulations!"

@@ -36,12 +36,24 @@ const answerTypeIcons = {
 };
 
 const Question = ({ question, updateQuestion, onRemove }) => {
-  const updateOptionStatus = (index, status) => {
-    const updatedOptions = [...question.options];
-    updatedOptions[index] = {
-      ...updatedOptions[index],
-      icon: status,
-    };
+  const handleAddChoice = () => {
+    const updatedOptions = [
+      ...(question.options || []),
+      { text: "", icon: "ok" },
+    ];
+    updateQuestion({ options: updatedOptions });
+  };
+
+  const handleOptionChange = (index, key, value) => {
+    const updatedOptions = [...(question.options || [])];
+    updatedOptions[index] = { ...updatedOptions[index], [key]: value };
+    updateQuestion({ options: updatedOptions });
+  };
+
+  const handleRemoveOption = (index) => {
+    const updatedOptions = (question.options || []).filter(
+      (_, i) => i !== index
+    );
     updateQuestion({ options: updatedOptions });
   };
 
@@ -49,18 +61,15 @@ const Question = ({ question, updateQuestion, onRemove }) => {
     <div className="p-4 border rounded-md mb-4 bg-white shadow-md">
       {/* Top Header */}
       <div className="flex justify-between items-center mb-4">
-        {/* Left: Required Checkbox */}
         <div className="flex items-center">
           <input
             type="checkbox"
-            checked={question.required || false}
-            onChange={(e) => updateQuestion({ required: e.target.checked })}
+            checked={question.isRequired || false}
+            onChange={(e) => updateQuestion({ isRequired: e.target.checked })}
             className="mr-2"
           />
           <span className="text-sm font-medium text-gray-700">Required</span>
         </div>
-
-        {/* Right: Answer Type and Cancel Button */}
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2 bg-gray-100 px-3 py-1 rounded-md">
             {answerTypeIcons[question.answerType] || null}
@@ -97,28 +106,20 @@ const Question = ({ question, updateQuestion, onRemove }) => {
           <label className="text-sm font-medium text-gray-700 mb-2">
             Add Options
           </label>
-          {question.options.map((option, index) => (
+          {(question.options || []).map((option, index) => (
             <div key={index} className="flex items-center mb-2">
-              {/* Option Input */}
               <input
                 type="text"
                 value={option.text}
-                onChange={(e) => {
-                  const updatedOptions = [...question.options];
-                  updatedOptions[index] = {
-                    ...updatedOptions[index],
-                    text: e.target.value,
-                  };
-                  updateQuestion({ options: updatedOptions });
-                }}
+                onChange={(e) =>
+                  handleOptionChange(index, "text", e.target.value)
+                }
                 className="w-full px-3 py-2 border rounded-md"
                 placeholder={`Option ${index + 1}`}
               />
-
-              {/* Icons */}
               <div className="flex space-x-2 ml-4">
                 <button
-                  onClick={() => updateOptionStatus(index, "ok")}
+                  onClick={() => handleOptionChange(index, "icon", "ok")}
                   className={`p-2 rounded-full ${
                     option.icon === "ok" ? "bg-green-100" : "bg-gray-100"
                   }`}
@@ -126,7 +127,7 @@ const Question = ({ question, updateQuestion, onRemove }) => {
                   {statusIcons.ok}
                 </button>
                 <button
-                  onClick={() => updateOptionStatus(index, "not_ok")}
+                  onClick={() => handleOptionChange(index, "icon", "not_ok")}
                   className={`p-2 rounded-full ${
                     option.icon === "not_ok" ? "bg-red-100" : "bg-gray-100"
                   }`}
@@ -134,7 +135,7 @@ const Question = ({ question, updateQuestion, onRemove }) => {
                   {statusIcons.not_ok}
                 </button>
                 <button
-                  onClick={() => updateOptionStatus(index, "warning")}
+                  onClick={() => handleOptionChange(index, "icon", "warning")}
                   className={`p-2 rounded-full ${
                     option.icon === "warning" ? "bg-yellow-100" : "bg-gray-100"
                   }`}
@@ -142,15 +143,8 @@ const Question = ({ question, updateQuestion, onRemove }) => {
                   {statusIcons.warning}
                 </button>
               </div>
-
-              {/* Remove Option */}
               <button
-                onClick={() => {
-                  const updatedOptions = question.options.filter(
-                    (_, i) => i !== index
-                  );
-                  updateQuestion({ options: updatedOptions });
-                }}
+                onClick={() => handleRemoveOption(index)}
                 className="ml-2 text-red-500 hover:text-red-600 text-sm"
               >
                 Remove
@@ -158,11 +152,7 @@ const Question = ({ question, updateQuestion, onRemove }) => {
             </div>
           ))}
           <button
-            onClick={() =>
-              updateQuestion({
-                options: [...question.options, { text: "", icon: "ok" }],
-              })
-            }
+            onClick={handleAddChoice}
             className="mt-2 w-32 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
           >
             Add Choices
@@ -171,20 +161,16 @@ const Question = ({ question, updateQuestion, onRemove }) => {
       )}
 
       {/* Instructions Field */}
-      {["dropdown", "image", "takepicture", "date"].includes(
-        question.answerType
-      ) && (
-        <div className="flex flex-col mb-4">
-          <label className="text-sm font-medium text-gray-700 mb-2">
-            Instructions
-          </label>
-          <ReactQuill
-            value={question.instructions || ""}
-            onChange={(value) => updateQuestion({ instructions: value })}
-            className="bg-white"
-          />
-        </div>
-      )}
+      <div className="flex flex-col mb-4">
+        <label className="text-sm font-medium text-gray-700 mb-2">
+          Instructions
+        </label>
+        <ReactQuill
+          value={question.instructions || ""}
+          onChange={(value) => updateQuestion({ instructions: value })}
+          className="bg-white"
+        />
+      </div>
     </div>
   );
 };

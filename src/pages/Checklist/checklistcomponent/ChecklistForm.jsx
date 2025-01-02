@@ -12,7 +12,6 @@ const ChecklistForm = ({
   const [checklistTitle, setChecklistTitle] = useState("");
   const [branches, setBranches] = useState([]);
 
-  // Sync checklistPost with state changes
   useEffect(() => {
     setChecklistPost((prev) => ({
       ...prev,
@@ -22,7 +21,21 @@ const ChecklistForm = ({
     }));
   }, [checklistTitle, selectedUnitCategories, branches, setChecklistPost]);
 
-  // Update questions in categories
+  // const updateQuestion = (categoryId, questionId, updatedData) => {
+  //   setCategories((prev) =>
+  //     prev.map((cat) =>
+  //       cat.id === categoryId
+  //         ? {
+  //             ...cat,
+  //             questions: cat.questions.map((q) =>
+  //               q.id === questionId ? { ...q, ...updatedData } : q
+  //             ),
+  //           }
+  //         : cat
+  //     )
+  //   );
+  // };
+
   const updateQuestion = (categoryId, questionId, updatedData) => {
     setCategories((prev) =>
       prev.map((cat) =>
@@ -30,7 +43,13 @@ const ChecklistForm = ({
           ? {
               ...cat,
               questions: cat.questions.map((q) =>
-                q.id === questionId ? { ...q, ...updatedData } : q
+                q.id === questionId
+                  ? {
+                      ...q,
+                      ...updatedData,
+                      choices: updatedData.options || q.choices || [], // Map options to choices
+                    }
+                  : q
               ),
             }
           : cat
@@ -38,7 +57,10 @@ const ChecklistForm = ({
     );
   };
 
-  // Add a branch to the list
+  console.log("Updated categories with choices:", categories);
+
+  console.log("categories", categories);
+
   const addBranch = () => {
     if (branchInput.trim() && !branches.includes(branchInput.trim())) {
       const newBranches = [...branches, branchInput.trim()];
@@ -49,12 +71,10 @@ const ChecklistForm = ({
     }
   };
 
-  // Remove a branch from the list
   const removeBranch = (branchToRemove) => {
     setBranches((prev) => prev.filter((branch) => branch !== branchToRemove));
   };
 
-  // Handle unit category selection
   const handleCategorySelection = (e) => {
     const selected = e.target.value;
     if (selected && !selectedUnitCategories.includes(selected)) {
@@ -62,57 +82,16 @@ const ChecklistForm = ({
     }
   };
 
-  // Remove a category from the list
   const removeUnitCategory = (categoryToRemove) => {
     setSelectedUnitCategories((prev) =>
       prev.filter((cat) => cat !== categoryToRemove)
     );
   };
 
-  // Save checklist
-  const handleSaveChecklist = () => {
-    if (!checklistTitle.trim()) {
-      alert("Checklist title is required.");
-      return;
-    }
-
-    if (!branches.length) {
-      alert("Please add at least one branch.");
-      return;
-    }
-
-    if (!selectedUnitCategories.length) {
-      alert("Please select at least one unit category.");
-      return;
-    }
-
-    const payload = {
-      title: checklistTitle.trim(),
-      branches,
-      categories: selectedUnitCategories,
-      questions: categories.flatMap((category) =>
-        category.questions.map((q) => ({
-          label: q.label,
-          answerType: q.answerType,
-          isRequired: q.isRequired || false,
-          instruction: q.instruction || "",
-          choices: q.choices.map((option) => ({
-            text: option.text,
-            icon: option.icon || "ok",
-          })),
-        }))
-      ),
-    };
-
-    setChecklistPost(payload);
-  };
-
   return (
     <div>
       <div className="bg-gray-50 p-6 mb-6 rounded-lg shadow-md">
         <h2 className="text-xl font-semibold mb-4">Create Checklist</h2>
-
-        {/* Checklist Title */}
         <div className="flex flex-col mb-6">
           <label className="text-lg font-semibold text-gray-700 mb-3">
             Checklist Title
@@ -125,8 +104,6 @@ const ChecklistForm = ({
             placeholder="Enter the checklist title"
           />
         </div>
-
-        {/* Unit Category Selection */}
         <div className="flex flex-col mb-6">
           <label className="text-lg font-semibold text-gray-700 mb-3">
             Select Unit Categories
@@ -152,8 +129,6 @@ const ChecklistForm = ({
             ))}
           </div>
         </div>
-
-        {/* Branch Input */}
         <div className="flex flex-col mb-6">
           <label className="text-lg font-semibold text-gray-700 mb-3">
             Add Branches
@@ -185,8 +160,6 @@ const ChecklistForm = ({
             ))}
           </div>
         </div>
-
-        {/* Questions Section */}
         {categories.map((category) => (
           <div key={category.id} className="mb-6">
             {category.questions.map((question) => (
@@ -201,13 +174,6 @@ const ChecklistForm = ({
           </div>
         ))}
       </div>
-
-      {/* <button
-        onClick={handleSaveChecklist}
-        className="px-6 py-2 bg-blue-600 text-white rounded-md mt-6"
-      >
-        Save Checklist
-      </button> */}
     </div>
   );
 };
