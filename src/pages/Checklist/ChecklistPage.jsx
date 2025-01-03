@@ -15,7 +15,7 @@ const ChecklistPage = () => {
   const [isChecklistCreated, setIsChecklistCreated] = useState(false);
   const [showChecklistList, setShowChecklistList] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
-  const [editingChecklist, setEditingChecklist] = useState(null);
+  const [editingChecklist, setEditingChecklist] = useState();
   const [createChecklist, { isLoading }] = usePostMutation();
 
   // const onAddAnswerType = (answerType) => {
@@ -50,7 +50,6 @@ const ChecklistPage = () => {
       message.error("Please create a category first.");
       return;
     }
-
     setCategories((prev) =>
       prev.map((category, index) =>
         index === 0 // Add to the first category (or use a specific ID/logic)
@@ -91,15 +90,17 @@ const ChecklistPage = () => {
       return;
     }
 
-    const questions = categories.flatMap((category) =>
+    const questions = editingChecklist.flatMap((category) =>
       category.questions.map((q) => ({
         label: q.label,
         answerType: q.answerType,
-        isRequired: q.isRequired || false,
-        instruction: q.instruction || "",
-        choices: q.choices || [],
+        isRequired: q.isRequired,
+        instruction: q.instruction,
+        choices: q.choices,
       }))
     );
+
+    console.log(checklistPost);
 
     if (!questions || questions.length === 0) {
       message.error("Please add at least one question.");
@@ -148,15 +149,13 @@ const ChecklistPage = () => {
   const handleEditChecklist = (checklist) => {
     console.log("checklist", checklist);
     console.log("categories edit", categories);
+    setEditingChecklist(checklist);
     console.log("editingChecklist", editingChecklist);
 
-    setEditingChecklist(checklist);
     setCategories([
       {
-        id: Date.now(),
         name: checklist.title,
         questions: checklist.questions.map((q) => ({
-          id: Date.now() + Math.random(),
           label: q.label,
           answerType: q.answerType,
           isRequired: q.isRequired,

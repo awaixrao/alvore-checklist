@@ -35,7 +35,7 @@ const Sidebar = ({ onAddAnswerType }) => {
           className="flex justify-between items-center mb-4 bg-gray-50 px-5 py-3 rounded-md hover:bg-gray-100 transition duration-200"
         >
           <div className="flex items-center space-x-4">
-            <span className="text-gray-700 text-xl">{type.icon}</span>
+            <span className="text-gray-700 text-xl">{type.icon} </span>
             <span className="text-gray-700 font-medium">{type.label}</span>
           </div>
           <button
