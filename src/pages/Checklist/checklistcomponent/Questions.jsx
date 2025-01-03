@@ -38,7 +38,7 @@ const answerTypeIcons = {
 };
 
 const Question = ({ question, updateQuestion, onRemove }) => {
-  const [localQuestion, setLocalQuestion] = useState(question);
+  const [localQuestion, setLocalQuestion] = useState();
   console.log("question", question);
   console.log("updateQuestion", updateQuestion);
   console.log("onRemove", onRemove);
