@@ -14,27 +14,60 @@ const ChecklistForm = ({
   const [branches, setBranches] = useState([]);
 
   // Populate form fields when editingChecklist changes
+  // useEffect(() => {
+  //   if (editingChecklist) {
+  //     setChecklistTitle(editingChecklist?.title || "");
+  //     setSelectedUnitCategories(editingChecklist?.categories || []);
+  //     setBranches(
+  //       editingChecklist?.branches?.map((branch) => branch.branchCode) || []
+  //     );
+  //     setCategories(
+  //       editingChecklist?.categories?.map((cat, index) => ({
+  //         id: index,
+  //         name: cat,
+  //         questions:
+  //           editingChecklist?.questions?.filter(
+  //             (question) => question.category === cat
+  //           ) || [],
+  //       })) || []
+  //     );
+  //   }
+  // }, [editingChecklist, setCategories]);
   useEffect(() => {
     if (editingChecklist) {
       setChecklistTitle(editingChecklist?.title || "");
       setSelectedUnitCategories(editingChecklist?.categories || []);
-      setBranches(editingChecklist?.branches || []);
-      setCategories(
-        Array.isArray(editingChecklist.categories)
-          ? editingChecklist?.categories?.map((cat, index) => ({
-              id: index,
-              name: cat,
-              questions: editingChecklist.questions || [],
-            }))
-          : []
+      setBranches(
+        editingChecklist?.branches?.map((branch) => branch.branchCode) || []
       );
+
+      // Map categories with questions
+      const mappedCategories = editingChecklist?.categories?.map(
+        (cat, index) => {
+          const categoryQuestions =
+            editingChecklist?.questions?.filter(
+              (question) => question.category === cat
+            ) || [];
+          return {
+            id: index,
+            name: cat,
+            questions: categoryQuestions.map((question, qIndex) => ({
+              id: qIndex,
+              label: question?.label || "",
+              answerType: question?.answerType || "",
+              isRequired: question?.isRequired || false,
+              choices: question?.choices || [],
+              instruction: question?.instruction || "",
+            })),
+          };
+        }
+      );
+
+      setCategories(mappedCategories || []);
     }
   }, [editingChecklist, setCategories]);
-  console.log("at the form page", editingChecklist);
-  console.log("branchInput", branchInput);
-  console.log("checklistTitle", checklistTitle);
-  console.log(selectedUnitCategories);
 
+  // Sync state with checklistPost
   useEffect(() => {
     setChecklistPost((prev) => ({
       ...prev,
@@ -43,7 +76,20 @@ const ChecklistForm = ({
       branches,
     }));
   }, [checklistTitle, selectedUnitCategories, branches, setChecklistPost]);
-
+  // const updateQuestion = (categoryId, questionId, updatedData) => {
+  //   setCategories((prev) =>
+  //     prev.map((cat) =>
+  //       cat.id === categoryId
+  //         ? {
+  //             ...cat,
+  //             questions: cat.questions.map((q) =>
+  //               q.id === questionId ? { ...q, ...updatedData } : q
+  //             ),
+  //           }
+  //         : cat
+  //     )
+  //   );
+  // };
   const updateQuestion = (categoryId, questionId, updatedData) => {
     setCategories((prev) =>
       prev.map((cat) =>
@@ -155,6 +201,7 @@ const ChecklistForm = ({
 
         {categories?.map((category) => (
           <div key={category.id} className="mb-6">
+            <h3 className="text-lg font-semibold">{category.name}</h3>
             {category?.questions?.map((question) => (
               <Question
                 key={question.id}

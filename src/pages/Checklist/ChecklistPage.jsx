@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button, message } from "antd";
 import DashboardHeader from "../../UI/Header";
 import ChecklistForm from "./checklistcomponent/ChecklistForm";
@@ -18,15 +18,42 @@ const ChecklistPage = () => {
   const [editingChecklist, setEditingChecklist] = useState(null);
   const [createChecklist, { isLoading }] = usePostMutation();
 
+  // const onAddAnswerType = (answerType) => {
+  //   if (!categories.length) {
+  //     message.error("Please create a checklist first.");
+  //     return;
+  //   }
+
+  //   setCategories((prev) =>
+  //     prev.map((category, index) =>
+  //       index === 0
+  //         ? {
+  //             ...category,
+  //             questions: [
+  //               ...category.questions,
+  //               {
+  //                 id: Date.now(),
+  //                 label: "",
+  //                 answerType,
+  //                 isRequired: false,
+  //                 choices: [],
+  //                 instruction: "",
+  //               },
+  //             ],
+  //           }
+  //         : category
+  //     )
+  //   );
+  // };
   const onAddAnswerType = (answerType) => {
     if (!categories.length) {
-      message.error("Please create a checklist first.");
+      message.error("Please create a category first.");
       return;
     }
 
     setCategories((prev) =>
       prev.map((category, index) =>
-        index === 0
+        index === 0 // Add to the first category (or use a specific ID/logic)
           ? {
               ...category,
               questions: [
