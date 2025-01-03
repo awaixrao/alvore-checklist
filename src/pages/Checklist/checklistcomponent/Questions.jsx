@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import {
@@ -36,25 +36,41 @@ const answerTypeIcons = {
 };
 
 const Question = ({ question, updateQuestion, onRemove }) => {
+  const [localQuestion, setLocalQuestion] = useState(question);
+  console.log("question", question);
+  console.log("updateQuestion", updateQuestion);
+  console.log("onRemove", onRemove);
+  console.log("localQuestion", localQuestion);
+
+  useEffect(() => {
+    setLocalQuestion(question); // Update local state when the question prop changes
+  }, [question]);
+
+  const handleUpdate = (updates) => {
+    const updatedQuestion = { ...localQuestion, ...updates };
+    setLocalQuestion(updatedQuestion);
+    updateQuestion(updatedQuestion);
+  };
+
   const handleAddChoice = () => {
     const updatedOptions = [
-      ...(question.choices || []),
+      ...(localQuestion.choices || []),
       { text: "", icon: "ok" },
     ];
-    updateQuestion({ choices: updatedOptions });
+    handleUpdate({ choices: updatedOptions });
   };
 
   const handleOptionChange = (index, key, value) => {
-    const updatedOptions = [...(question.choices || [])];
+    const updatedOptions = [...(localQuestion.choices || [])];
     updatedOptions[index] = { ...updatedOptions[index], [key]: value };
-    updateQuestion({ choices: updatedOptions });
+    handleUpdate({ choices: updatedOptions });
   };
 
   const handleRemoveOption = (index) => {
-    const updatedOptions = (question.choices || []).filter(
+    const updatedOptions = (localQuestion.choices || []).filter(
       (_, i) => i !== index
     );
-    updateQuestion({ choices: updatedOptions });
+    handleUpdate({ choices: updatedOptions });
   };
 
   return (
@@ -64,17 +80,17 @@ const Question = ({ question, updateQuestion, onRemove }) => {
         <div className="flex items-center">
           <input
             type="checkbox"
-            checked={question.isRequired || false}
-            onChange={(e) => updateQuestion({ isRequired: e.target.checked })}
+            checked={localQuestion.isRequired || false}
+            onChange={(e) => handleUpdate({ isRequired: e.target.checked })}
             className="mr-2"
           />
           <span className="text-sm font-medium text-gray-700">Required</span>
         </div>
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2 bg-gray-100 px-3 py-1 rounded-md">
-            {answerTypeIcons[question.answerType] || null}
+            {answerTypeIcons[localQuestion.answerType] || null}
             <span className="text-sm text-gray-700">
-              {question.answerType || "Select Answer"}
+              {localQuestion.answerType || "Select Answer"}
             </span>
           </div>
           <button
@@ -93,87 +109,73 @@ const Question = ({ question, updateQuestion, onRemove }) => {
         </label>
         <input
           type="text"
-          value={question.label}
-          onChange={(e) => updateQuestion({ label: e.target.value })}
+          value={localQuestion?.label}
+          onChange={(e) => handleUpdate({ label: e.target.value })}
           className="w-full px-3 py-2 border rounded-md"
           placeholder="Enter the question"
         />
       </div>
 
       {/* Choices Section for Dropdown or MCQs */}
-      {["mcqs", "dropdown"].includes(question.answerType) && (
+      {["mcqs", "dropdown"].includes(localQuestion?.answerType) && (
         <div className="flex flex-col mb-4">
           <label className="text-sm font-medium text-gray-700 mb-2">
             Add Options
           </label>
-          {["mcqs", "dropdown"].includes(question.answerType) && (
-            <div className="flex flex-col mb-4">
-              {(question.choices || []).map((option, index) => (
-                <div key={index} className="flex items-center mb-2">
-                  {/* Text input for choice */}
-                  <input
-                    type="text"
-                    value={option.text}
-                    onChange={(e) =>
-                      handleOptionChange(index, "text", e.target.value)
-                    }
-                    className="w-full px-3 py-2 border rounded-md"
-                    placeholder={`Option ${index + 1}`}
-                  />
-
-                  {/* Icons for selection */}
-                  <div className="flex ml-2 space-x-2">
-                    {["ok", "not_ok", "warning"].map((iconValue) => (
-                      <span
-                        key={iconValue}
-                        onClick={() =>
-                          handleOptionChange(index, "icon", iconValue)
-                        }
-                        className={`cursor-pointer text-xl ${
-                          option.icon === iconValue
-                            ? "text-blue-500"
-                            : "text-gray-500"
-                        }`}
-                      >
-                        {statusIcons[iconValue]}
-                      </span>
-                    ))}
-                  </div>
-
-                  {/* Display selected icon */}
-                  <span className="ml-2">{statusIcons[option.icon]}</span>
-
-                  {/* Remove button */}
-                  <button
-                    onClick={() => handleRemoveOption(index)}
-                    className="ml-2 text-red-500 hover:text-red-600 text-sm"
+          {localQuestion?.choices?.map((option, index) => (
+            <div key={index} className="flex items-center mb-2">
+              <input
+                type="text"
+                value={option?.text}
+                onChange={(e) =>
+                  handleOptionChange(index, "text", e.target.value)
+                }
+                className="w-full px-3 py-2 border rounded-md"
+                placeholder={`Option ${index + 1}`}
+              />
+              <div className="flex ml-2 space-x-2">
+                {["ok", "not_ok", "warning"].map((iconValue) => (
+                  <span
+                    key={iconValue}
+                    onClick={() => handleOptionChange(index, "icon", iconValue)}
+                    className={`cursor-pointer text-xl ${
+                      option.icon === iconValue
+                        ? "text-blue-500"
+                        : "text-gray-500"
+                    }`}
                   >
-                    Remove
-                  </button>
-                </div>
-              ))}
+                    {statusIcons[iconValue]}
+                  </span>
+                ))}
+              </div>
               <button
-                onClick={handleAddChoice}
-                className="mt-2 w-32 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                onClick={() => handleRemoveOption(index)}
+                className="ml-2 text-red-500 hover:text-red-600 text-sm"
               >
-                Add Choices
+                Remove
               </button>
             </div>
-          )}
+          ))}
+          <button
+            onClick={handleAddChoice}
+            className="mt-2 w-32 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+          >
+            Add Choices
+          </button>
         </div>
       )}
 
       {/* Instructions Field */}
       {["dropdown", "image", "takepicture", "date"].includes(
-        question.answerType
+        localQuestion?.answerType
       ) && (
         <div className="flex flex-col mb-4">
           <label className="text-sm font-medium text-gray-700 mb-2">
             Instructions
           </label>
           <ReactQuill
-            value={question.instruction || ""}
-            onChange={(value) => updateQuestion({ instruction: value })}
+            value={localQuestion?.instruction}
+            onChange={(value) => handleUpdate({ instruction: value })}
             className="bg-white"
           />
         </div>

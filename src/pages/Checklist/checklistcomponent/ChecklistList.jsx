@@ -8,8 +8,13 @@ const ChecklistList = ({ onEdit }) => {
     path: "checklist/get-all", // API endpoint for fetching checklists
   });
 
-  const [deleteChecklist] = useDeleteMutation(); // Delete checklist API hook
+  console.log(data);
 
+  const [deleteChecklist] = useDeleteMutation(); // Delete checklist API hook
+  const onEditchecklist = (record) => {
+    const checklist = data.find(({ _id }) => _id === record.id); // Find the full checklist object
+    onEdit(checklist); // Send the complete checklist object to the onEdit callback
+  };
   // Map the API response data to table data
   const checklists =
     data?.map((checklist) => ({
@@ -55,7 +60,7 @@ const ChecklistList = ({ onEdit }) => {
       key: "actions",
       render: (record) => (
         <div className="flex space-x-2">
-          <Button type="link" onClick={() => onEdit(record)}>
+          <Button type="link" onClick={() => onEditchecklist(record)}>
             Edit
           </Button>
           <Popconfirm
