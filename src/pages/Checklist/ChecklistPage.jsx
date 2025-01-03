@@ -203,38 +203,46 @@ const ChecklistPage = () => {
               >
                 {showChecklistList ? "Hide Checklists" : "Show Checklists"}
               </Button>
-              <Button
-                type="primary"
-                onClick={addCategory}
-                className="rounded bg-blue-600 hover:bg-blue-500 px-6 py-2"
-              >
-                Create New Checklist
-              </Button>
+              {!showChecklistList && (
+                <Button
+                  type="primary"
+                  onClick={addCategory}
+                  className="rounded bg-blue-600 hover:bg-blue-500 px-6 py-2"
+                >
+                  Create New Checklist
+                </Button>
+              )}
             </div>
           )}
         </div>
         <div className="flex">
-          <div className="flex-1 bg-white shadow-md rounded-md p-6">
-            {isChecklistCreated ? (
-              <ChecklistForm
-                setChecklistPost={setChecklistPost}
-                categories={categories}
-                setCategories={setCategories}
-                checklistPost={checklistPost}
-                editingChecklist={editingChecklist}
-              />
-            ) : showChecklistList ? (
+          {showChecklistList ? (
+            <div className="flex-1 bg-white shadow-md rounded-md p-6">
               <ChecklistList onEdit={handleEditChecklist} />
-            ) : (
-              <div className="flex justify-center items-center h-full">
-                <p className="text-gray-600">
-                  Click "Create New Checklist" to start or "Show Checklists" to
-                  view existing ones.
-                </p>
+            </div>
+          ) : (
+            <>
+              <div className="flex-1 bg-white shadow-md rounded-md p-6">
+                {isChecklistCreated ? (
+                  <ChecklistForm
+                    setChecklistPost={setChecklistPost}
+                    categories={categories}
+                    setCategories={setCategories}
+                    checklistPost={checklistPost}
+                    editingChecklist={editingChecklist}
+                  />
+                ) : (
+                  <div className="flex justify-center items-center h-full">
+                    <p className="text-gray-600">
+                      Click "Create New Checklist" to start or "Show Checklists"
+                      to view existing ones.
+                    </p>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-          <Sidebar onAddAnswerType={onAddAnswerType} />
+              <Sidebar onAddAnswerType={onAddAnswerType} />
+            </>
+          )}
         </div>
       </div>
       {showPopup && (

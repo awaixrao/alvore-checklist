@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Question from "./Questions";
+import { useGetQuery } from "../../../services/apiService";
+import { Select, Spin } from "antd";
 
 const ChecklistForm = ({
   categories,
@@ -9,35 +11,19 @@ const ChecklistForm = ({
   editingChecklist,
 }) => {
   const [selectedUnitCategories, setSelectedUnitCategories] = useState([]);
-  const [branchInput, setBranchInput] = useState("");
+  const [selectedBranches, setSelectedBranches] = useState([]);
   const [checklistTitle, setChecklistTitle] = useState("");
-  const [branches, setBranches] = useState([]);
+
+  const { data: branchData, isLoading } = useGetQuery({
+    path: "branch/get_all",
+  });
 
   // Populate form fields when editingChecklist changes
-  // useEffect(() => {
-  //   if (editingChecklist) {
-  //     setChecklistTitle(editingChecklist?.title || "");
-  //     setSelectedUnitCategories(editingChecklist?.categories || []);
-  //     setBranches(
-  //       editingChecklist?.branches?.map((branch) => branch.branchCode) || []
-  //     );
-  //     setCategories(
-  //       editingChecklist?.categories?.map((cat, index) => ({
-  //         id: index,
-  //         name: cat,
-  //         questions:
-  //           editingChecklist?.questions?.filter(
-  //             (question) => question.category === cat
-  //           ) || [],
-  //       })) || []
-  //     );
-  //   }
-  // }, [editingChecklist, setCategories]);
   useEffect(() => {
     if (editingChecklist) {
       setChecklistTitle(editingChecklist?.title || "");
       setSelectedUnitCategories(editingChecklist?.categories || []);
-      setBranches(
+      setSelectedBranches(
         editingChecklist?.branches?.map((branch) => branch.branchCode) || []
       );
 
@@ -73,9 +59,15 @@ const ChecklistForm = ({
       ...prev,
       title: checklistTitle,
       categories: selectedUnitCategories,
-      branches,
+      branches: selectedBranches, // Ensure selected branches are synced
     }));
-  }, [checklistTitle, selectedUnitCategories, branches, setChecklistPost]);
+  }, [
+    checklistTitle,
+    selectedUnitCategories,
+    selectedBranches,
+    setChecklistPost,
+  ]);
+
   // const updateQuestion = (categoryId, questionId, updatedData) => {
   //   setCategories((prev) =>
   //     prev.map((cat) =>
@@ -90,6 +82,22 @@ const ChecklistForm = ({
   //     )
   //   );
   // };
+
+  const handleRemoveQuestion = (categoryId, questionId) => {
+    setCategories((prev) =>
+      prev.map((category) =>
+        category.id === categoryId
+          ? {
+              ...category,
+              questions: category.questions.filter(
+                (question) => question.id !== questionId
+              ),
+            }
+          : category
+      )
+    );
+  };
+
   const updateQuestion = (categoryId, questionId, updatedData) => {
     setCategories((prev) =>
       prev.map((cat) =>
@@ -126,20 +134,19 @@ const ChecklistForm = ({
           <label className="text-lg font-semibold text-gray-700 mb-3">
             Select Unit Categories
           </label>
-          <select
-            onChange={(e) => {
-              const selected = e.target.value;
-              if (selected && !selectedUnitCategories.includes(selected)) {
-                setSelectedUnitCategories((prev) => [...prev, selected]);
-              }
-            }}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md"
+          <Select
+            mode="multiple"
+            placeholder="Select categories"
+            value={selectedUnitCategories}
+            onChange={(value) => setSelectedUnitCategories(value)}
+            style={{ width: "100%" }}
           >
-            <option value="">Select a category</option>
-            <option value="Delivery Units">Delivery Units</option>
-            <option value="Sales Units">Sales Units</option>
-            <option value="Supervision Units">Supervision Units</option>
-          </select>
+            <Select.Option value="Delivery Units">Delivery Units</Select.Option>
+            <Select.Option value="Sales Units">Sales Units</Select.Option>
+            <Select.Option value="Supervision Units">
+              Supervision Units
+            </Select.Option>
+          </Select>
           <div className="flex flex-wrap mt-3">
             {selectedUnitCategories?.map((cat) => (
               <span
@@ -159,38 +166,31 @@ const ChecklistForm = ({
 
         <div className="flex flex-col mb-6">
           <label className="text-lg font-semibold text-gray-700 mb-3">
-            Add Branches
+            Select Branches
           </label>
-          <div className="flex space-x-2 mb-3">
-            <input
-              type="text"
-              value={branchInput}
-              onChange={(e) => setBranchInput(e.target.value)}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-lg"
-              placeholder="Enter branch code"
-            />
-            <button
-              onClick={() => {
-                if (
-                  branchInput.trim() &&
-                  !branches.includes(branchInput.trim())
-                ) {
-                  setBranches((prev) => [...prev, branchInput.trim()]);
-                  setBranchInput("");
-                }
-              }}
-              className="px-4 py-2 bg-green-500 text-white rounded-lg"
-            >
-              Add
-            </button>
-          </div>
+          <Select
+            mode="multiple"
+            placeholder="Select branches"
+            value={selectedBranches}
+            onChange={(value) => setSelectedBranches(value)}
+            style={{ width: "100%" }}
+            loading={isLoading}
+          >
+            {branchData?.data?.map((branch) => (
+              <Select.Option key={branch.branchCode} value={branch.branchCode}>
+                {branch.branchCode}
+              </Select.Option>
+            ))}
+          </Select>
           <div className="flex flex-wrap mt-3">
-            {branches?.map((branch) => (
+            {selectedBranches?.map((branch) => (
               <span
                 key={branch}
-                className="bg-gray-200 text-gray-700 px-3 py-1 rounded-lg mr-2 mb-2 cursor-pointer"
+                className="bg-blue-200 text-blue-700 px-3 py-1 rounded-lg mr-2 mb-2 cursor-pointer"
                 onClick={() =>
-                  setBranches((prev) => prev.filter((item) => item !== branch))
+                  setSelectedBranches((prev) =>
+                    prev.filter((item) => item !== branch)
+                  )
                 }
               >
                 {branch} &times;
@@ -209,6 +209,7 @@ const ChecklistForm = ({
                 updateQuestion={(updatedData) =>
                   updateQuestion(category.id, question.id, updatedData)
                 }
+                onRemove={() => handleRemoveQuestion(category.id, question.id)} // Pass the function here
               />
             ))}
           </div>

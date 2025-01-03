@@ -5,31 +5,18 @@ import { useGetQuery, useDeleteMutation } from "../../../services/apiService";
 const ChecklistList = ({ onEdit }) => {
   // Fetch all checklists
   const { data, isLoading, refetch } = useGetQuery({
-    path: "checklist/get-all", // API endpoint for fetching checklists
+    path: "checklist/get-all",
   });
 
-  console.log(data);
+  const [deleteChecklist] = useDeleteMutation();
 
-  const [deleteChecklist] = useDeleteMutation(); // Delete checklist API hook
-  const onEditchecklist = (record) => {
-    const checklist = data.find(({ _id }) => _id === record.id); // Find the full checklist object
-    onEdit(checklist); // Send the complete checklist object to the onEdit callback
+  // Edit Checklist Handler
+  const onEditChecklist = (record) => {
+    const checklist = data.find(({ _id }) => _id === record.id);
+    onEdit(checklist);
   };
-  // Map the API response data to table data
-  const checklists =
-    data?.map((checklist) => ({
-      id: checklist._id,
-      title: checklist.title,
-      branches:
-        checklist.branches?.map((branch) => branch.branchCode).join(", ") ||
-        "N/A", // Join branch codes
-      categories: checklist.categories?.join(", ") || "N/A", // Join categories
-      createdBy: `${checklist.createdBy.firstname} ${checklist.createdBy.lastname}`, // Combine firstname and lastname
-      questions: checklist.questions || [], // Full questions array
-      questionsCount: checklist.questions?.length || 0, // Count of questions
-    })) || [];
 
-  // Handle checklist deletion
+  // Delete Checklist Handler
   const handleDelete = async (id) => {
     if (!id) {
       message.error("Invalid checklist ID");
@@ -37,7 +24,7 @@ const ChecklistList = ({ onEdit }) => {
     }
     try {
       await deleteChecklist({
-        path: `checklist/delete/${id}`, // API endpoint for deleting
+        path: `checklist/delete/${id}`,
       }).unwrap();
       message.success("Checklist deleted successfully!");
       refetch();
@@ -48,19 +35,60 @@ const ChecklistList = ({ onEdit }) => {
     }
   };
 
+  // Map the API response to table data
+  const checklists =
+    data?.map((checklist) => ({
+      id: checklist._id,
+      title: checklist.title || "N/A",
+      branches:
+        checklist.branches?.map((branch) => branch.branchCode).join(", ") ||
+        "N/A",
+      categories: checklist.categories?.join(", ") || "N/A",
+      createdBy:
+        `${checklist.createdBy?.firstname || ""} ${
+          checklist.createdBy?.lastname || ""
+        }`.trim() || "N/A",
+      questionsCount: checklist.questions?.length || 0,
+    })) || [];
+
   // Define table columns
   const columns = [
-    { title: "Title", dataIndex: "title", key: "title" },
-    { title: "Branches", dataIndex: "branches", key: "branches" }, // Show branches
-    { title: "Categories", dataIndex: "categories", key: "categories" }, // Show categories
-    { title: "Questions", dataIndex: "questionsCount", key: "questionsCount" },
-    { title: "Created By", dataIndex: "createdBy", key: "createdBy" }, // Display creator
+    {
+      title: "Title",
+      dataIndex: "title",
+      key: "title",
+      responsive: ["xs", "sm", "md", "lg"],
+    },
+    {
+      title: "Branches",
+      dataIndex: "branches",
+      key: "branches",
+      responsive: ["sm", "md", "lg"],
+    },
+    {
+      title: "Categories",
+      dataIndex: "categories",
+      key: "categories",
+      responsive: ["sm", "md", "lg"],
+    },
+    {
+      title: "Questions",
+      dataIndex: "questionsCount",
+      key: "questionsCount",
+      responsive: ["xs", "sm", "md", "lg"],
+    },
+    {
+      title: "Created By",
+      dataIndex: "createdBy",
+      key: "createdBy",
+      responsive: ["sm", "md", "lg"],
+    },
     {
       title: "Actions",
       key: "actions",
       render: (record) => (
         <div className="flex space-x-2">
-          <Button type="link" onClick={() => onEditchecklist(record)}>
+          <Button type="link" onClick={() => onEditChecklist(record)}>
             Edit
           </Button>
           <Popconfirm
@@ -78,6 +106,7 @@ const ChecklistList = ({ onEdit }) => {
     },
   ];
 
+  // Return Responsive Table
   return (
     <Table
       columns={columns}
@@ -85,7 +114,7 @@ const ChecklistList = ({ onEdit }) => {
       rowKey={(record) => record.id}
       loading={isLoading}
       pagination={{ pageSize: 10 }}
-      scroll={{ x: 1200 }}
+      scroll={{ x: "max-content" }}
     />
   );
 };

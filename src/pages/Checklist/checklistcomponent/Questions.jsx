@@ -15,12 +15,14 @@ import {
   FaFileUpload,
   FaCameraRetro,
 } from "react-icons/fa";
+import NAIcon from "./NAIcon";
 
 // Define the icons for status
 const statusIcons = {
   ok: <FaCheckCircle className="text-green-500" />,
   not_ok: <FaTimesCircle className="text-red-500" />,
   warning: <FaExclamationCircle className="text-yellow-500" />,
+  na: <NAIcon className="custom-icon-class" />,
 };
 
 // Define the icons object for answer types
@@ -37,10 +39,6 @@ const answerTypeIcons = {
 
 const Question = ({ question, updateQuestion, onRemove }) => {
   const [localQuestion, setLocalQuestion] = useState(question);
-  console.log("question", question);
-  console.log("updateQuestion", updateQuestion);
-  console.log("onRemove", onRemove);
-  console.log("localQuestion", localQuestion);
 
   useEffect(() => {
     setLocalQuestion(question); // Update local state when the question prop changes
@@ -134,20 +132,21 @@ const Question = ({ question, updateQuestion, onRemove }) => {
                 placeholder={`Option ${index + 1}`}
               />
               <div className="flex ml-2 space-x-2">
-                {["ok", "not_ok", "warning"].map((iconValue) => (
+                {["ok", "not_ok", "warning", "na"].map((iconValue) => (
                   <span
                     key={iconValue}
                     onClick={() => handleOptionChange(index, "icon", iconValue)}
-                    className={`cursor-pointer text-xl ${
+                    className={`cursor-pointer text-xl transition-transform transform ${
                       option.icon === iconValue
-                        ? "text-blue-500"
-                        : "text-gray-500"
+                        ? "scale-125 text-blue-600 shadow-md"
+                        : "text-gray-500 hover:text-blue-500 hover:scale-110"
                     }`}
                   >
                     {statusIcons[iconValue]}
                   </span>
                 ))}
               </div>
+
               <button
                 onClick={() => handleRemoveOption(index)}
                 className="ml-2 text-red-500 hover:text-red-600 text-sm"
