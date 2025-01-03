@@ -39,9 +39,13 @@ const answerTypeIcons = {
 
 const Question = ({ question, updateQuestion, onRemove }) => {
   const [localQuestion, setLocalQuestion] = useState(question);
+  console.log("question", question);
+  console.log("updateQuestion", updateQuestion);
+  console.log("onRemove", onRemove);
+  console.log("localQuestion", localQuestion);
 
   useEffect(() => {
-    setLocalQuestion(question); // Update local state when the question prop changes
+    setLocalQuestion(question); // Sync with the latest question prop
   }, [question]);
 
   const handleUpdate = (updates) => {
@@ -51,15 +55,12 @@ const Question = ({ question, updateQuestion, onRemove }) => {
   };
 
   const handleAddChoice = () => {
-    const updatedOptions = [
-      ...(localQuestion.choices || []),
-      { text: "", icon: "ok" },
-    ];
+    const updatedOptions = [...localQuestion.choices, { text: "", icon: "ok" }];
     handleUpdate({ choices: updatedOptions });
   };
 
   const handleOptionChange = (index, key, value) => {
-    const updatedOptions = [...(localQuestion.choices || [])];
+    const updatedOptions = [...localQuestion.choices];
     updatedOptions[index] = { ...updatedOptions[index], [key]: value };
     handleUpdate({ choices: updatedOptions });
   };
@@ -78,7 +79,7 @@ const Question = ({ question, updateQuestion, onRemove }) => {
         <div className="flex items-center">
           <input
             type="checkbox"
-            checked={localQuestion.isRequired || false}
+            checked={localQuestion?.isRequired || false}
             onChange={(e) => handleUpdate({ isRequired: e.target.checked })}
             className="mr-2"
           />
@@ -86,9 +87,9 @@ const Question = ({ question, updateQuestion, onRemove }) => {
         </div>
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2 bg-gray-100 px-3 py-1 rounded-md">
-            {answerTypeIcons[localQuestion.answerType] || null}
+            {answerTypeIcons[localQuestion?.answerType]}
             <span className="text-sm text-gray-700">
-              {localQuestion.answerType || "Select Answer"}
+              {localQuestion?.answerType || "Select Answer"}
             </span>
           </div>
           <button
@@ -114,8 +115,9 @@ const Question = ({ question, updateQuestion, onRemove }) => {
         />
       </div>
 
-      {/* Choices Section for Dropdown or MCQs */}
-      {["mcqs", "dropdown"].includes(localQuestion?.answerType) && (
+      {/* Conditional Sections for Different Answer Types */}
+      {localQuestion?.answerType == "mcqs" ||
+      localQuestion?.answerType === "dropdown" ? (
         <div className="flex flex-col mb-4">
           <label className="text-sm font-medium text-gray-700 mb-2">
             Add Options
@@ -136,10 +138,10 @@ const Question = ({ question, updateQuestion, onRemove }) => {
                   <span
                     key={iconValue}
                     onClick={() => handleOptionChange(index, "icon", iconValue)}
-                    className={`cursor-pointer text-xl transition-transform transform ${
+                    className={`cursor-pointer text-xl ${
                       option.icon === iconValue
-                        ? "scale-125 text-blue-600 shadow-md"
-                        : "text-gray-500 hover:text-blue-500 hover:scale-110"
+                        ? "text-blue-500"
+                        : "text-gray-500"
                     }`}
                   >
                     {statusIcons[iconValue]}
@@ -162,12 +164,12 @@ const Question = ({ question, updateQuestion, onRemove }) => {
             Add Choices
           </button>
         </div>
-      )}
+      ) : null}
 
-      {/* Instructions Field */}
-      {["dropdown", "image", "takepicture", "date"].includes(
-        localQuestion?.answerType
-      ) && (
+      {/* Instructions Field for Dropdown or Image Types */}
+      {(localQuestion?.answerType === "dropdown" ||
+        localQuestion?.answerType === "image" ||
+        localQuestion?.answerType === "takepicture") && (
         <div className="flex flex-col mb-4">
           <label className="text-sm font-medium text-gray-700 mb-2">
             Instructions

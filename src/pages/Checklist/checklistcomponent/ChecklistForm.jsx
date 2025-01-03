@@ -19,6 +19,26 @@ const ChecklistForm = ({
   });
 
   // Populate form fields when editingChecklist changes
+  // useEffect(() => {
+  //   if (editingChecklist) {
+  //     setChecklistTitle(editingChecklist?.title || "");
+  //     setSelectedUnitCategories(editingChecklist?.categories || []);
+  //     setBranches(
+  //       editingChecklist?.branches?.map((branch) => branch.branchCode) || []
+  //     );
+  //     setCategories(
+  //       editingChecklist?.categories?.map((cat, index) => ({
+  //         id: index,
+  //         name: cat,
+  //         questions:
+  //           editingChecklist?.questions?.filter(
+  //             (question) => question.category === cat
+  //           ) || [],
+  //       })) || []
+  //     );
+  //   }
+  // }, [editingChecklist, setCategories]);
+
   useEffect(() => {
     if (editingChecklist) {
       setChecklistTitle(editingChecklist?.title || "");
@@ -40,7 +60,7 @@ const ChecklistForm = ({
             questions: categoryQuestions.map((question, qIndex) => ({
               id: qIndex,
               label: question?.label || "",
-              answerType: question?.answerType || "",
+              answerType: question?.answerType,
               isRequired: question?.isRequired || false,
               choices: question?.choices || [],
               instruction: question?.instruction || "",
@@ -49,9 +69,17 @@ const ChecklistForm = ({
         }
       );
 
-      setCategories(mappedCategories || []);
+      setCategories(mappedCategories);
+
+      console.log("categories", categories);
     }
   }, [editingChecklist, setCategories]);
+
+  console.log("checklistTitle", checklistTitle);
+  console.log("branches", branches);
+  console.log("branchInput", branchInput);
+  console.log("selectedUnitCategories", selectedUnitCategories);
+  console.log("editingChecklist", editingChecklist);
 
   // Sync state with checklistPost
   useEffect(() => {
@@ -201,7 +229,6 @@ const ChecklistForm = ({
 
         {categories?.map((category) => (
           <div key={category.id} className="mb-6">
-            <h3 className="text-lg font-semibold">{category.name}</h3>
             {category?.questions?.map((question) => (
               <Question
                 key={question.id}
