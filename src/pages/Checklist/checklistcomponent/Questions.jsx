@@ -45,13 +45,16 @@ const Question = ({ question, updateQuestion, onRemove }) => {
   console.log("localQuestion", localQuestion);
 
   useEffect(() => {
-    setLocalQuestion(question); // Sync with the latest question prop
+    if (question) {
+      setLocalQuestion(question);
+      console.log("Setting localQuestion:", question);
+    }
   }, [question]);
 
   const handleUpdate = (updates) => {
     const updatedQuestion = { ...localQuestion, ...updates };
     setLocalQuestion(updatedQuestion);
-    updateQuestion(updatedQuestion);
+    updateQuestion(updatedQuestion); // Call the updateQuestion function passed as a prop
   };
 
   const handleAddChoice = () => {

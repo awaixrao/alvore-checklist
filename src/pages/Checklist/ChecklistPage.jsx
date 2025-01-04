@@ -7,16 +7,19 @@ import ChecklistList from "./checklistcomponent/ChecklistList";
 import Popup from "../../UI/PopUp";
 import checklist from "../../assets/checklistimg.png";
 
-import { usePostMutation } from "../../services/apiService";
+import { usePostMutation, usePutMutation } from "../../services/apiService";
 
 const ChecklistPage = () => {
   const [categories, setCategories] = useState([]);
   const [checklistPost, setChecklistPost] = useState({});
+  const [questions, setQuestions] = useState([]);
+
   const [isChecklistCreated, setIsChecklistCreated] = useState(false);
   const [showChecklistList, setShowChecklistList] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
   const [editingChecklist, setEditingChecklist] = useState();
   const [createChecklist, { isLoading }] = usePostMutation();
+  const [updateChecklist] = usePutMutation();
 
   // const onAddAnswerType = (answerType) => {
   //   if (!categories.length) {
@@ -46,34 +49,21 @@ const ChecklistPage = () => {
   //   );
   // };
   const onAddAnswerType = (answerType) => {
-    if (!categories.length) {
-      message.error("Please create a category first.");
-      return;
-    }
-    setCategories((prev) =>
-      prev.map((category, index) =>
-        index === 0 // Add to the first category (or use a specific ID/logic)
-          ? {
-              ...category,
-              questions: [
-                ...category.questions,
-                {
-                  id: Date.now(),
-                  label: "",
-                  answerType,
-                  isRequired: false,
-                  choices: [],
-                  instruction: "",
-                },
-              ],
-            }
-          : category
-      )
-    );
+    setQuestions((prevQuestions) => [
+      ...prevQuestions,
+      {
+        id: Date.now(), // Generate a unique ID
+        label: "", // Default empty label
+        answerType, // Selected answer type
+        isRequired: false, // Default to not required
+        choices: [], // Initialize empty choices
+        instruction: "", // Default empty instruction
+      },
+    ]);
   };
 
   const handleSaveChecklist = async () => {
-    const { title, branches, categories: unitCategories } = checklistPost;
+    const { title, branches, categories } = checklistPost;
 
     if (!title?.trim()) {
       message.error("Checklist title is required.");
@@ -85,22 +75,10 @@ const ChecklistPage = () => {
       return;
     }
 
-    if (!unitCategories || unitCategories.length === 0) {
-      message.error("Please select at least one unit category.");
+    if (!categories || categories.length === 0) {
+      message.error("Please select at least one category.");
       return;
     }
-
-    const questions = categories?.flatMap((category) =>
-      category.questions.map((q) => ({
-        label: q.label,
-        answerType: q.answerType,
-        isRequired: q.isRequired,
-        instruction: q.instruction,
-        choices: q.choices,
-      }))
-    );
-
-    console.log(checklistPost);
 
     if (!questions || questions.length === 0) {
       message.error("Please add at least one question.");
@@ -110,18 +88,35 @@ const ChecklistPage = () => {
     try {
       const token = localStorage.getItem("authToken");
 
-      const response = await createChecklist({
-        path: "checklist/create",
-        body: { ...checklistPost, questions },
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }).unwrap();
-
-      message.success(response.message || "Checklist created successfully!");
-      setShowPopup(true);
-      setCategories([]);
-      setIsChecklistCreated(false);
+      if (!editingChecklist) {
+        const response = await createChecklist({
+          path: "checklist/create",
+          body: { ...checklistPost, questions },
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }).unwrap();
+        message.success(response.message || "Checklist created successfully!");
+        setShowPopup(true);
+        setCategories([]);
+        setQuestions([]);
+        setIsChecklistCreated(false);
+      }
+      if (editingChecklist) {
+        const response = await updateChecklist({
+          path: `checklist/update/${editingChecklist?._id}`,
+          method: "PUT",
+          body: { ...checklistPost, questions },
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }).unwrap();
+        message.success(response.message || "Checklist updated successfully!");
+        setShowPopup(true);
+        setCategories([]);
+        setQuestions([]);
+        setIsChecklistCreated(false);
+      }
     } catch (error) {
       message.error(
         error?.data?.message || "Failed to create checklist. Please try again."
@@ -130,42 +125,76 @@ const ChecklistPage = () => {
   };
 
   const handleCancelChecklist = () => {
-    setCategories([]);
-    setIsChecklistCreated(false);
-    setEditingChecklist(null);
+    setChecklistPost({
+      title: "",
+      branches: [],
+      categories: [],
+    }); // Reset the checklist post data
+    setQuestions([]); // Reset the questions
+    setCategories([]); // Reset the categories
+    setIsChecklistCreated(false); // Exit creation/edit mode
+    setEditingChecklist(null); // Ensure editing state is cleared
+    message.info("Checklist  canceled. .");
   };
 
   const addCategory = () => {
-    setCategories([
-      {
-        id: Date.now(),
-        name: "",
-        questions: [],
-      },
-    ]);
-    setIsChecklistCreated(true);
+    setChecklistPost({
+      title: "",
+      branches: [],
+      categories: [],
+    }); // Initialize for a new checklist
+    setQuestions([]); // Clear any leftover questions
+    setCategories([]); // Start with no categories
+    setIsChecklistCreated(true); // Enter create mode
   };
 
-  const handleEditChecklist = (checklist) => {
-    console.log("checklist", checklist);
-    console.log("categories edit", categories);
-    setEditingChecklist(checklist);
-    console.log("editingChecklist", editingChecklist);
+  console.log("editingChecklist", editingChecklist);
 
-    setCategories([
-      {
-        name: checklist.title,
-        questions: checklist.questions.map((q) => ({
-          label: q.label,
-          answerType: q.answerType,
-          isRequired: q.isRequired,
-          choices: q.choices || [],
-          instruction: q.instruction || "",
-        })),
-      },
-    ]);
-    setIsChecklistCreated(true);
-    setShowChecklistList(false);
+  const handleEditChecklist = (checklist) => {
+    console.log("Checklist being edited:", checklist);
+
+    // Ensure checklist contains questions and categories
+    if (!checklist || !checklist.questions) {
+      message.error("Checklist data is incomplete or invalid.");
+      return;
+    }
+
+    // Map questions
+    const mappedQuestions = checklist.questions.map((q, qIndex) => ({
+      id: qIndex,
+      label: q.label || "",
+      answerType: q.answerType || "",
+      isRequired: q.isRequired || false,
+      choices: q.choices || [],
+      instruction: q.instruction || "",
+    }));
+
+    console.log("Mapped questions:", mappedQuestions);
+
+    // Update questions state
+    setQuestions(mappedQuestions);
+
+    // Update categories state (if needed, otherwise skip)
+    const mappedCategories = checklist.categories.map((cat, index) => ({
+      id: index,
+      name: cat,
+      questions: [],
+    }));
+    setCategories(mappedCategories);
+
+    // Update other states
+    setChecklistPost({
+      title: checklist.title,
+      branches: checklist.branches.map((branch) => branch.branchCode),
+      categories: checklist.categories,
+    });
+
+    setIsChecklistCreated(true); // Show the edit form
+    setEditingChecklist(checklist); // Keep track of the checklist being edited
+    setShowChecklistList(false); // Hide the checklist list
+
+    console.log("ChecklistPost:", checklistPost);
+    console.log("Categories:", mappedCategories);
   };
 
   console.log("categories", categories);
@@ -227,6 +256,8 @@ const ChecklistPage = () => {
                     setChecklistPost={setChecklistPost}
                     categories={categories}
                     setCategories={setCategories}
+                    questions={questions} // Pass questions
+                    setQuestions={setQuestions} // Pass setter if needed
                     checklistPost={checklistPost}
                     editingChecklist={editingChecklist}
                   />

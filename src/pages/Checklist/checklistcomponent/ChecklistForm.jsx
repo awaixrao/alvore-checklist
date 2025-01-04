@@ -9,6 +9,8 @@ const ChecklistForm = ({
   setChecklistPost,
   checklistPost,
   editingChecklist,
+  questions, // Add this
+  setQuestions, // Add this if required for updates
 }) => {
   const [selectedUnitCategories, setSelectedUnitCategories] = useState([]);
   const [selectedBranches, setSelectedBranches] = useState([]);
@@ -46,6 +48,14 @@ const ChecklistForm = ({
       setSelectedBranches(
         editingChecklist?.branches?.map((branch) => branch.branchCode) || []
       );
+
+      console.log("Rendering ChecklistForm with categories:", categories);
+      categories.forEach((cat) => {
+        console.log(
+          `Rendering category: ${cat.name} with questions:`,
+          cat.questions
+        );
+      });
 
       // Map categories with questions
       const mappedCategories = editingChecklist?.categories?.map(
@@ -95,6 +105,28 @@ const ChecklistForm = ({
     selectedBranches,
     setChecklistPost,
   ]);
+  useEffect(() => {
+    console.log("Categories passed to ChecklistForm:", categories);
+  }, [categories]);
+
+  useEffect(() => {
+    if (editingChecklist) {
+      const mappedCategories = editingChecklist.categories?.map(
+        (cat, index) => {
+          const categoryQuestions = editingChecklist.questions?.filter(
+            (q) => q.category === cat
+          );
+          return {
+            id: index,
+            name: cat,
+            questions: categoryQuestions || [],
+          };
+        }
+      );
+
+      setCategories(mappedCategories || []);
+    }
+  }, [editingChecklist]);
 
   // const updateQuestion = (categoryId, questionId, updatedData) => {
   //   setCategories((prev) =>
@@ -226,20 +258,21 @@ const ChecklistForm = ({
             ))}
           </div>
         </div>
-
-        {categories?.map((category) => (
-          <div key={category.id} className="mb-6">
-            {category?.questions?.map((question) => (
-              <Question
-                key={question.id}
-                question={question}
-                updateQuestion={(updatedData) =>
-                  updateQuestion(category.id, question.id, updatedData)
-                }
-                onRemove={() => handleRemoveQuestion(category.id, question.id)} // Pass the function here
-              />
-            ))}
-          </div>
+        {questions?.map((question) => (
+          <Question
+            key={question.id}
+            question={question}
+            updateQuestion={(updatedData) =>
+              setQuestions((prev) =>
+                prev.map((q) =>
+                  q.id === question.id ? { ...q, ...updatedData } : q
+                )
+              )
+            }
+            onRemove={() =>
+              setQuestions((prev) => prev.filter((q) => q.id !== question.id))
+            }
+          />
         ))}
       </div>
     </div>
