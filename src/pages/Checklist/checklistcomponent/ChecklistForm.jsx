@@ -75,11 +75,11 @@ const ChecklistForm = ({
     }
   }, [editingChecklist, setCategories]);
 
-  console.log("checklistTitle", checklistTitle);
-  console.log("branches", branches);
-  console.log("branchInput", branchInput);
-  console.log("selectedUnitCategories", selectedUnitCategories);
-  console.log("editingChecklist", editingChecklist);
+  // console.log("checklistTitle", checklistTitle);
+  // console.log("branches", branches);
+  // console.log("branchInput", branchInput);
+  // console.log("selectedUnitCategories", selectedUnitCategories);
+  // console.log("editingChecklist", editingChecklist);
 
   // Sync state with checklistPost
   useEffect(() => {

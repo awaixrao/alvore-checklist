@@ -90,7 +90,7 @@ const ChecklistPage = () => {
       return;
     }
 
-    const questions = editingChecklist.flatMap((category) =>
+    const questions = categories?.flatMap((category) =>
       category.questions.map((q) => ({
         label: q.label,
         answerType: q.answerType,
