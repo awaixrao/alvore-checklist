@@ -115,6 +115,8 @@ const ChecklistPage = () => {
         setShowPopup(true);
         setCategories([]);
         setQuestions([]);
+        setEditingChecklist(null); // Reset editing state
+
         setIsChecklistCreated(false);
       }
     } catch (error) {
