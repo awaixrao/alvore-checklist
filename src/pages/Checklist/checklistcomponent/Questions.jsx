@@ -37,7 +37,7 @@ const answerTypeIcons = {
   signature: <FaSignature />,
 };
 
-const Question = ({ question, updateQuestion, onRemove }) => {
+const Question = ({ question, updateQuestion, onRemove, onUploadImage }) => {
   const [localQuestion, setLocalQuestion] = useState();
   console.log("question", question);
   console.log("updateQuestion", updateQuestion);
@@ -54,7 +54,14 @@ const Question = ({ question, updateQuestion, onRemove }) => {
   const handleUpdate = (updates) => {
     const updatedQuestion = { ...localQuestion, ...updates };
     setLocalQuestion(updatedQuestion);
-    updateQuestion(updatedQuestion); // Call the updateQuestion function passed as a prop
+    updateQuestion(updatedQuestion); // Update parent component
+  };
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      onUploadImage(file); // Notify parent of the uploaded image
+    }
   };
 
   const handleAddChoice = () => {
@@ -168,10 +175,25 @@ const Question = ({ question, updateQuestion, onRemove }) => {
           </button>
         </div>
       ) : null}
+      {localQuestion?.answerType === "uploadimageslect" && (
+        <div className="mb-4">
+          <label className="text-sm font-medium">Upload Image</label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleImageUpload}
+            className="w-full px-3 py-2 border rounded-md"
+          />
+          <p className="text-xs text-gray-500 mt-2">
+            This image will be sent in the checklist's `uploadedImages` field.
+          </p>
+        </div>
+      )}
 
       {/* Instructions Field for Dropdown or Image Types */}
       {(localQuestion?.answerType === "dropdown" ||
         localQuestion?.answerType === "image" ||
+        localQuestion?.answerType === "uploadimageslect" ||
         localQuestion?.answerType === "takepicture") && (
         <div className="flex flex-col mb-4">
           <label className="text-sm font-medium text-gray-700 mb-2">

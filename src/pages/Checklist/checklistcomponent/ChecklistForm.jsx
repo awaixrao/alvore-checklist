@@ -9,6 +9,8 @@ const ChecklistForm = ({
   setChecklistPost,
   checklistPost,
   editingChecklist,
+  handleUploadImage, // Accept the function as a prop
+
   questions, // Add this
   setQuestions, // Add this if required for updates
 }) => {
@@ -85,12 +87,6 @@ const ChecklistForm = ({
     }
   }, [editingChecklist, setCategories]);
 
-  // console.log("checklistTitle", checklistTitle);
-  // console.log("branches", branches);
-  // console.log("branchInput", branchInput);
-  // console.log("selectedUnitCategories", selectedUnitCategories);
-  // console.log("editingChecklist", editingChecklist);
-
   // Sync state with checklistPost
   useEffect(() => {
     setChecklistPost((prev) => ({
@@ -127,21 +123,6 @@ const ChecklistForm = ({
       setCategories(mappedCategories || []);
     }
   }, [editingChecklist]);
-
-  // const updateQuestion = (categoryId, questionId, updatedData) => {
-  //   setCategories((prev) =>
-  //     prev.map((cat) =>
-  //       cat.id === categoryId
-  //         ? {
-  //             ...cat,
-  //             questions: cat.questions.map((q) =>
-  //               q.id === questionId ? { ...q, ...updatedData } : q
-  //             ),
-  //           }
-  //         : cat
-  //     )
-  //   );
-  // };
 
   const handleRemoveQuestion = (categoryId, questionId) => {
     setCategories((prev) =>
@@ -262,6 +243,7 @@ const ChecklistForm = ({
           <Question
             key={question.id}
             question={question}
+            onUploadImage={handleUploadImage} // Pass it down to Question
             updateQuestion={(updatedData) =>
               setQuestions((prev) =>
                 prev.map((q) =>
