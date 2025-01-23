@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Modal, message } from "antd";
 import { useDispatch } from "react-redux";
-import { TbFileSettings } from "react-icons/tb";
+import { TbFileSettings, TbReportSearch } from "react-icons/tb";
 import { FiMapPin, FiMenu, FiX, FiLogOut } from "react-icons/fi"; // Toggle icons
 import { LuLayoutPanelLeft } from "react-icons/lu";
 import { VscChecklist } from "react-icons/vsc";
@@ -134,6 +134,15 @@ const Sidebar = () => {
               >
                 <VscChecklist size={20} />
                 <span>CHECKLIST</span>
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="/reports"
+                className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-blue-100 hover:text-blue-600"
+              >
+                <TbReportSearch size={20} />
+                <span>Reports</span>
               </Link>
             </li>
 

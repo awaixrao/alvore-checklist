@@ -1,11 +1,14 @@
-import React from "react";
-import { Table, Button, message, Popconfirm } from "antd";
+import React, { useState } from "react";
+import { Table, Button, Input, message, Popconfirm } from "antd";
 import { useGetQuery, useDeleteMutation } from "../../../services/apiService";
 
 const BranchList = ({ onEdit }) => {
   const { data, isLoading, refetch } = useGetQuery({
     path: "branch/get_all",
   });
+  const [searchText, setSearchText] = useState("");
+  const [filteredData, setFilteredData] = useState([]);
+
   const [deleteBranch] = useDeleteMutation();
 
   // Map the branches
@@ -21,6 +24,18 @@ const BranchList = ({ onEdit }) => {
       createdAt: branch.createdAt,
       updatedAt: branch.updatedAt,
     })) || [];
+
+  // Filtered data setup
+  const onSearch = (value) => {
+    setSearchText(value);
+    const filtered = branches.filter((branch) =>
+      Object.values(branch)
+        .join(" ")
+        .toLowerCase()
+        .includes(value.toLowerCase())
+    );
+    setFilteredData(filtered);
+  };
 
   // Handle Delete
   const handleDelete = async (id) => {
@@ -52,31 +67,37 @@ const BranchList = ({ onEdit }) => {
       title: "Branch Code",
       dataIndex: "branchCode",
       key: "branchCode",
+      sorter: (a, b) => a.branchCode.localeCompare(b.branchCode),
     },
     {
       title: "Branch Name",
       dataIndex: "branchName",
       key: "branchName",
+      sorter: (a, b) => a.branchName.localeCompare(b.branchName),
     },
     {
       title: "Address",
       dataIndex: "branchAddress",
       key: "branchAddress",
+      sorter: (a, b) => a.branchAddress.localeCompare(b.branchAddress),
     },
     {
       title: "State",
       dataIndex: "state",
       key: "state",
+      sorter: (a, b) => a.state.localeCompare(b.state),
     },
     {
       title: "Country",
       dataIndex: "country",
       key: "country",
+      sorter: (a, b) => a.country.localeCompare(b.country),
     },
     {
       title: "Details",
       dataIndex: "branchDetails",
       key: "branchDetails",
+      sorter: (a, b) => a.branchDetails.localeCompare(b.branchDetails),
     },
     {
       title: "Actions",
@@ -110,15 +131,25 @@ const BranchList = ({ onEdit }) => {
     index % 2 === 0 ? "bg-gray-100" : "bg-white";
 
   return (
-    <Table
-      columns={columns}
-      dataSource={branches}
-      rowKey={(record) => record.id}
-      loading={isLoading}
-      pagination={{ pageSize: 10 }}
-      bordered={false}
-      rowClassName={rowClassName} // Apply alternating row styles
-    />
+    <div>
+      <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: 16 }}>
+        <Input.Search
+          placeholder="Search branches"
+          allowClear
+          onSearch={onSearch}
+          style={{ width: 200 }} // Smaller width for the search bar
+        />
+      </div>
+      <Table
+        columns={columns}
+        dataSource={searchText ? filteredData : branches}
+        rowKey={(record) => record.id}
+        loading={isLoading}
+        pagination={{ pageSize: 10 }}
+        bordered={false}
+        rowClassName={rowClassName} // Apply alternating row styles
+      />
+    </div>
   );
 };
 

@@ -13,6 +13,7 @@ import ResetPassword from "./pages/ResetPassword/ResetPassword";
 import ChecklistPage from "./pages/Checklist/ChecklistPage";
 import ProtectedRoute from "./ProtectedRoute"; // Import ProtectedRoute
 import PublicRoute from "./PublicRoute"; // Import PublicRoute
+import Reports from "./pages/Reports/Reports";
 
 function App() {
   return (
@@ -74,6 +75,7 @@ function App() {
         <Route path="/users" element={<Users />} />
         <Route path="/routes" element={<RoutesPage />} />
         <Route path="/checklist" element={<ChecklistPage />} />
+        <Route path="/reports" element={<Reports />} />
       </Route>
     </Routes>
   );

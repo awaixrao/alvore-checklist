@@ -1,11 +1,14 @@
-import React from "react";
-import { Table, Button, message, Popconfirm } from "antd";
+import React, { useState } from "react";
+import { Table, Input, Button, message, Popconfirm } from "antd";
 import { useGetQuery, useDeleteMutation } from "../../../services/apiService";
 
 const RoutesList = ({ onEdit }) => {
   const { data, isLoading, refetch } = useGetQuery({
     path: "route/get_all",
   });
+  const [searchText, setSearchText] = useState("");
+  const [filteredData, setFilteredData] = useState([]);
+
   const [deleteRoute] = useDeleteMutation();
 
   const routes =
@@ -18,6 +21,19 @@ const RoutesList = ({ onEdit }) => {
       user: route.user?.username || "Unassigned", // Extract the username or mark as Unassigned
     })) || [];
 
+  // Search functionality
+  const onSearch = (value) => {
+    setSearchText(value);
+    const filtered = routes.filter((route) =>
+      Object.values(route)
+        .join(" ")
+        .toLowerCase()
+        .includes(value.toLowerCase())
+    );
+    setFilteredData(filtered);
+  };
+
+  // Handle delete
   const handleDelete = async (id) => {
     try {
       const token = localStorage.getItem("authToken");
@@ -36,12 +52,38 @@ const RoutesList = ({ onEdit }) => {
     }
   };
 
+  // Table columns
   const columns = [
-    { title: "Route Number", dataIndex: "routeNumber", key: "routeNumber" },
-    { title: "Economic Unit", dataIndex: "economicUnit", key: "economicUnit" },
-    { title: "Branch Code", dataIndex: "branchCode", key: "branchCode" },
-    { title: "Branch Name", dataIndex: "branchName", key: "branchName" },
-    { title: "Assigned User", dataIndex: "user", key: "user" },
+    {
+      title: "Route Number",
+      dataIndex: "routeNumber",
+      key: "routeNumber",
+      sorter: (a, b) => a.routeNumber.localeCompare(b.routeNumber),
+    },
+    {
+      title: "Economic Unit",
+      dataIndex: "economicUnit",
+      key: "economicUnit",
+      sorter: (a, b) => a.economicUnit.localeCompare(b.economicUnit),
+    },
+    {
+      title: "Branch Code",
+      dataIndex: "branchCode",
+      key: "branchCode",
+      sorter: (a, b) => a.branchCode.localeCompare(b.branchCode),
+    },
+    {
+      title: "Branch Name",
+      dataIndex: "branchName",
+      key: "branchName",
+      sorter: (a, b) => a.branchName.localeCompare(b.branchName),
+    },
+    {
+      title: "Assigned User",
+      dataIndex: "user",
+      key: "user",
+      sorter: (a, b) => a.user.localeCompare(b.user),
+    },
     {
       title: "Actions",
       key: "actions",
@@ -69,14 +111,24 @@ const RoutesList = ({ onEdit }) => {
     index % 2 === 0 ? "bg-gray-100" : "bg-white";
 
   return (
-    <Table
-      columns={columns}
-      dataSource={routes}
-      rowKey={(record) => record.id}
-      loading={isLoading}
-      pagination={{ pageSize: 10 }}
-      rowClassName={rowClassName}
-    />
+    <div>
+      <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: 16 }}>
+        <Input.Search
+          placeholder="Search routes"
+          allowClear
+          onSearch={onSearch}
+          style={{ width: 200 }} // Smaller search bar width
+        />
+      </div>
+      <Table
+        columns={columns}
+        dataSource={searchText ? filteredData : routes}
+        rowKey={(record) => record.id}
+        loading={isLoading}
+        pagination={{ pageSize: 10 }}
+        rowClassName={rowClassName}
+      />
+    </div>
   );
 };
 
