@@ -15,6 +15,7 @@
     "apexcharts": "^4.2.0",
     "country-flag-icons": "^1.5.13",
     "jwt-decode": "^4.0.0",
+    "moment": "^2.30.1",
     "react": "^18.3.1",
     "react-apexcharts": "^1.7.0",
     "react-dom": "^18.3.1",
@@ -24,7 +25,8 @@
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.0.2",
     "recharts": "^2.15.0",
-    "redux-persist": "^6.0.0"
+    "redux-persist": "^6.0.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.15.0",
