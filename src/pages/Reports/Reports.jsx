@@ -4,7 +4,6 @@ import { useGetQuery } from "../../services/apiService";
 import moment from "moment";
 import ReportDetails from "./components/ReportDetails";
 import * as XLSX from "xlsx";
-import ChecklistDetail from "./components/ChecklistDetail";
 
 const ReportsPage = () => {
   const [selectedBranch, setSelectedBranch] = useState(null);
