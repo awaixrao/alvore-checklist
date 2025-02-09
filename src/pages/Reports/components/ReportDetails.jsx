@@ -7,7 +7,10 @@ import UnitReports from "./UnitReports"; // Import UnitReports
 const ReportDetails = ({ branchName, dateRange, data, summary }) => {
   const [selectedUnit, setSelectedUnit] = useState(null);
   const [showUnitReports, setShowUnitReports] = useState(false);
+  console.log("🔍 ReportDetails Props:", { branchName, dateRange, data });
 
+  
+  
   // Fetch units from the API using useGetQuery
   const { data: unitsData, isLoading: unitsLoading, error: unitsError } = useGetQuery({
     path: "car/get_all",
@@ -22,12 +25,30 @@ const ReportDetails = ({ branchName, dateRange, data, summary }) => {
     message.error("Error fetching units. Please try again.");
   }
 
-  // Filter data for the selected unit
-  const filteredReports = data.filter((record) =>
-    Array.isArray(record.units)
-      ? record.units.some((unit) => unit === selectedUnit)
-      : record.units === selectedUnit
-  );
+  // Update the fault counting logic
+  const processedData = data?.map((record) => ({
+    ...record,
+    faultsReported: record.answers?.reduce((faultCount, answer) => {
+      // Count how many not_ok choices are in this answer
+      const notOkCount = answer.choices?.filter(choice => choice.icon === "not_ok").length || 0;
+      return faultCount + notOkCount;
+    }, 0) || 0,
+    units: Array.isArray(record.units) 
+      ? record.units.join(", ")
+      : typeof record.units === 'string' 
+        ? record.units 
+        : "N/A",
+  })) || [];
+
+  // Update the units filtering logic
+  const filteredReports = selectedUnit 
+    ? processedData.filter((record) => {
+        const recordUnits = typeof record.units === 'string' 
+          ? record.units.split(", ")
+          : [];
+        return recordUnits.includes(selectedUnit);
+      })
+    : processedData;
 
   // Handle filtering and rendering UnitReports
   const handleFilterUnit = () => {
@@ -45,15 +66,7 @@ const ReportDetails = ({ branchName, dateRange, data, summary }) => {
         <Button type="default" onClick={() => setShowUnitReports(false)} className="mb-4">
           Back to Report Details
         </Button>
-        <UnitReports
-  data={filteredReports} 
-  unit={selectedUnit}
-  branchName={branchName}
-  dateRange={dateRange}
-/>
-
-console.log(filteredReports);
-
+        <UnitReports data={filteredReports} unit={selectedUnit} branchName={branchName} dateRange={dateRange} />
       </div>
     );
   }
@@ -93,7 +106,7 @@ console.log(filteredReports);
         <Card className="shadow-md">
           <h2 className="text-lg font-semibold">Total Faults</h2>
           <p className="text-2xl font-bold text-red-500">
-            {data.reduce((sum, item) => sum + (item?.faultsReported || 0), 0)}
+            {processedData.reduce((sum, item) => sum + item.faultsReported, 0)}
           </p>
         </Card>
         <Card className="shadow-md">
@@ -116,19 +129,17 @@ console.log(filteredReports);
             title: "Units",
             dataIndex: "units",
             key: "units",
-            render: (units) =>
-              Array.isArray(units)
-                ? units.map((unit) => unit || "Unknown Unit").join(", ")
-                : units || "N/A",
+            render: (units) => units || "N/A",  // Simply display the units string
           },
           {
             title: "Faults Reported",
             dataIndex: "faultsReported",
             key: "faultsReported",
+            render: (faults) => <span className="text-red-500 font-bold">{faults}</span>,
           },
         ]}
-        dataSource={data}
-        rowKey={(record) => record.id || Math.random()}
+        dataSource={filteredReports}
+        rowKey={(record) => record._id || Math.random()}
         pagination={{ pageSize: 5 }}
       />
     </div>

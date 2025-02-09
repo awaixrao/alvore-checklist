@@ -6,13 +6,18 @@ import { BrowserRouter } from "react-router-dom";
 import { Provider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
 import store, { persistor } from "./store/store.js";
+import { LanguageProvider } from "./services/LanguageContext.jsx";
+
+
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>
       <Provider store={store}>
         <PersistGate loading={null} persistor={persistor}>
-          <App />
+          <LanguageProvider>
+            <App />
+          </LanguageProvider>
         </PersistGate>
       </Provider>
     </BrowserRouter>

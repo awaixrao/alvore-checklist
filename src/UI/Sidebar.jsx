@@ -3,9 +3,11 @@ import { Link, useNavigate } from "react-router-dom";
 import { Modal, message } from "antd";
 import { useDispatch } from "react-redux";
 import { TbFileSettings, TbReportSearch } from "react-icons/tb";
-import { FiMapPin, FiMenu, FiX, FiLogOut } from "react-icons/fi"; // Toggle icons
+import { FiMapPin, FiMenu, FiX, FiLogOut  } from "react-icons/fi"; // Toggle icons
 import { LuLayoutPanelLeft } from "react-icons/lu";
 import { VscChecklist } from "react-icons/vsc";
+import { CiSettings } from "react-icons/ci";
+
 import { logout } from "../features/AuthSlice/authSlice"; // Import logout action
 import { persistor } from "../store/store"; // Import persistor
 
@@ -143,6 +145,15 @@ const Sidebar = () => {
               >
                 <TbReportSearch size={20} />
                 <span>Reports</span>
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="/setting"
+                className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-blue-100 hover:text-blue-600"
+              >
+                <CiSettings size={20} />
+                <span>Setting</span>
               </Link>
             </li>
 

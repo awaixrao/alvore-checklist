@@ -16,6 +16,7 @@ import {
   FaCameraRetro,
 } from "react-icons/fa";
 import NAIcon from "./NAIcon";
+import { message } from "antd";
 
 // Define the icons for status
 const statusIcons = {
@@ -60,7 +61,28 @@ const Question = ({ question, updateQuestion, onRemove, onUploadImage }) => {
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
-      onUploadImage(file); // Notify parent of the uploaded image
+      // Validate file type and size
+      if (!file.type.startsWith('image/')) {
+        message.error('Please upload an image file');
+        return;
+      }
+      
+      // Optional: Add size limit (e.g., 5MB)
+      const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+      if (file.size > MAX_SIZE) {
+        message.error('Image size should be less than 5MB');
+        return;
+      }
+
+      // Create a preview if needed
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        // You can store preview URL in local state if needed
+        // setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+
+      onUploadImage(file); // Pass the raw file to parent
     }
   };
 

@@ -145,30 +145,32 @@ const Users = () => {
               </Form.Item>
 
               <Form.Item
-                label="Phone Number"
-                name="phone"
-                rules={[
-                  { required: true, message: "Phone number is required!" },
-                  {
-                    pattern: /^\+?[1-9]\d{1,14}$/,
-                    message: "Enter a valid phone number!",
-                  },
-                ]}
-              >
-                <PhoneInput
-                  country={"us"} // Default country
-                  value={phone}
-                  onChange={(phone) => setPhone(phone)} // Update state on change
-                  inputStyle={{
-                    width: "100%",
-                    borderRadius: "8px",
-                    border: "1px solid #d9d9d9",
-                    padding: "8px",
-                  }}
-                  buttonStyle={{ borderRadius: "8px" }}
-                  placeholder="Enter Phone Number"
-                />
-              </Form.Item>
+  label="Phone Number"
+  name="phone"
+  rules={[
+    { required: true, message: "Phone number is required!" },
+    {
+      pattern: /^\+?[1-9]\d{1,14}$/,
+      message: "Enter a valid phone number!",
+    },
+  ]}
+>
+  <PhoneInput
+    onlyCountries={["mx", "sv", "gt"]} // Mexico, El Salvador, Guatemala
+    country={"mx"} // Default country
+    value={phone}
+    onChange={(phone) => setPhone(phone)} // Update state on change
+    inputStyle={{
+      width: "100%",
+      borderRadius: "8px",
+      border: "1px solid #d9d9d9",
+      padding: "8px",
+    }}
+    buttonStyle={{ borderRadius: "8px" }}
+    placeholder="Enter Phone Number"
+  />
+</Form.Item>
+
             </div>
 
             {/* Right Column */}

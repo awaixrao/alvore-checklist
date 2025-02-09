@@ -1,8 +1,8 @@
 import React, { useState, useRef } from "react";
-import { Form, Input, Button, message } from "antd";
+import { Form, Input, Select, Button, message } from "antd";
 import "antd/dist/reset.css";
 import DashboardHeader from "../../UI/Header";
-import { usePostMutation, usePutMutation } from "../../services/apiService";
+import { usePostMutation, usePutMutation, useGetQuery } from "../../services/apiService";
 import RoutesList from "./RouteComponents/RouteList";
 import routeimg from "../../assets/routesimg.png";
 
@@ -13,6 +13,10 @@ const RoutesPage = () => {
   const [createRoute, { isLoading: creating }] = usePostMutation(); // Create route API hook
   const [updateRoute, { isLoading: updating }] = usePutMutation(); // Update route API hook
   const formRef = useRef(null); // Ref for scrolling to form
+
+  // Fetch users and branch codes using API queries
+  const { data: users, error: usersError } = useGetQuery({ path: "auth/users" });
+  const { data: branches, error: branchesError } = useGetQuery({ path: "branch/get_all" });
 
   const onFinish = async (values) => {
     try {
@@ -86,42 +90,49 @@ const RoutesPage = () => {
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-4">
             <Form.Item
-              label={
-                <span className="text-gray-700 font-medium">Route Number</span>
-              }
+              label={<span className="text-gray-700 font-medium">Route Number</span>}
               name="routeNumber"
               rules={[{ required: true, message: "Route number is required!" }]}
             >
               <Input placeholder="Enter Route Number" />
             </Form.Item>
+
             <Form.Item
-              label={
-                <span className="text-gray-700 font-medium">Branch Code</span>
-              }
+              label={<span className="text-gray-700 font-medium">Branch Code</span>}
               name="branchCode"
               rules={[{ required: true, message: "Branch code is required!" }]}
             >
-              <Input placeholder="Enter Branch Code" />
+         <Select placeholder="Select Branch Code">
+  {branches?.data?.map((branch) => (
+    <Select.Option key={branch._id} value={branch.branchCode}>
+      {branch.branchCode}
+    </Select.Option>
+  ))}
+</Select>
+
             </Form.Item>
+
             <Form.Item
-              label={
-                <span className="text-gray-700 font-medium">Economic Unit</span>
-              }
+              label={<span className="text-gray-700 font-medium">Economic Unit</span>}
               name="economicUnit"
-              rules={[
-                { required: true, message: "Economic unit is required!" },
-              ]}
+              rules={[{ required: true, message: "Economic unit is required!" }]}
             >
               <Input placeholder="Enter Economic Unit" />
             </Form.Item>
+
             <Form.Item
-              label={
-                <span className="text-gray-700 font-medium">Username</span>
-              }
+              label={<span className="text-gray-700 font-medium">Username</span>}
               name="username"
               rules={[{ required: true, message: "Username is required!" }]}
             >
-              <Input placeholder="Enter Username" />
+             <Select placeholder="Select Username">
+  {users?.users?.map((user) => (
+    <Select.Option key={user._id} value={user.username}>
+      {user.username}
+    </Select.Option>
+  ))}
+</Select>
+
             </Form.Item>
           </div>
 

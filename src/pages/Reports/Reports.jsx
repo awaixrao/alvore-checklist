@@ -4,12 +4,17 @@ import { useGetQuery } from "../../services/apiService";
 import moment from "moment";
 import ReportDetails from "./components/ReportDetails";
 import * as XLSX from "xlsx";
+import ChecklistDetail from "./components/ChecklistDetail";
 
 const ReportsPage = () => {
   const [selectedBranch, setSelectedBranch] = useState(null);
   const [dateRange, setDateRange] = useState([null, null]);
   const [filteredData, setFilteredData] = useState([]);
   const [routeNumbers, setRouteNumbers] = useState({});
+  const [selectedChecklistId, setSelectedChecklistId] = useState(null); // State to store the checklistId
+  const [isChecklistVisible, setIsChecklistVisible] = useState(false); // State to control visibility of checklist details
+
+
   const [totalUsers, setTotalUsers] = useState(0);
   const [totalChecklists, setTotalChecklists] = useState(0);
   const [showDetails, setShowDetails] = useState(false);
@@ -60,27 +65,25 @@ const ReportsPage = () => {
 
   useEffect(() => {
     if (reportsData) {
-      const reports = reportsData.map((report) => ({
-        id: report._id,
-        branchCode: report.branches?.[0]?.branchCode || "N/A",
-        checklistTitle: report.checklistId?.title || "N/A",
-        driver: `${report.driverId?.firstname || "N/A"} ${
-          report.driverId?.lastname || ""
+      const reports = reportsData?.map((report) => ({
+        id: report?._id,
+        branchCode: report?.branches?.[0]?.branchCode || "N/A",
+        checklistTitle: report?.checklistId?.title || "N/A",
+        driver: `${report?.driverId?.firstname || "N/A"} ${
+          report?.driverId?.lastname || ""
         }`,
-        units: report.units?.map((unit) => unit.unitNumber).join(", ") || "N/A",
-        routes: report.routes
-          ?.map((routeId) => routeNumbers[routeId] || routeId)
-          .join(", ") || "N/A",
-        presentedReports: report.presentedReports || 1,
-        pendingReports: report.pendingReports || 0,
-        compliance: report.compliance || 100,
-        createdAt: report.createdAt,
-        formattedDate: moment(report.createdAt).format("YYYY-MM-DD") || "N/A",
+        units: report?.units?.map((unit) => unit?.unitNumber)?.join(", ") || "N/A",
+        routes: report?.routes?.map((route) => route?.routeNumber)?.join(", ") || "N/A",
+        presentedReports: report?.presentedReports || 1,
+        pendingReports: report?.pendingReports || 0,
+        compliance: report?.compliance || 100,
+        createdAt: report?.createdAt,
+        formattedDate: moment(report?.createdAt).format("YYYY-MM-DD") || "N/A",
       }));
       setFilteredData(reports);
     }
-  }, [reportsData, routeNumbers]);
-
+  }, [reportsData]);
+  
   // Handle API errors
   useEffect(() => {
     if (error) {
@@ -88,44 +91,102 @@ const ReportsPage = () => {
     }
   }, [error]);
 
-  // Filter reports based on selected branch and date range
-  const handleFilter = () => {
-    const filtered = (reportsData || []).filter((report) => {
-      const matchesBranch = selectedBranch
-        ? report.branches?.[0]?.branchCode === selectedBranch
-        : true;
-      const matchesDate =
-        dateRange[0] && dateRange[1]
-          ? moment(report.createdAt).isBetween(
-              moment(dateRange[0]).startOf("day"),
-              moment(dateRange[1]).endOf("day"),
-              undefined,
-              "[]"
-            )
-          : true;
-      return matchesBranch && matchesDate;
+ const handleFilter = () => {
+  if (!dateRange || dateRange.length !== 2 || !dateRange[0] || !dateRange[1]) {
+    message.warning("Please select a valid date range.");
+    return;
+  }
+
+  const startDate = dateRange[0].startOf('day');
+  const endDate = dateRange[1].endOf('day');
+
+  // Debug logs
+  console.log("Start Date:", startDate.format());
+  console.log("End Date:", endDate.format());
+  console.log("Original Reports Data:", reportsData);
+
+  // Check if reportsData is directly an array (without .data property)
+  const reportsArray = Array.isArray(reportsData) ? reportsData : reportsData?.data;
+
+  if (!Array.isArray(reportsArray)) {
+    console.error("reportsData is not in expected format:", reportsData);
+    return;
+  }
+
+  const filtered = reportsArray.filter((report) => {
+    const reportDate = moment(report.createdAt);
+    const matchesBranch = selectedBranch
+      ? report?.branches?.[0]?.branchCode === selectedBranch
+      : true;
+    const matchesDate = reportDate.isBetween(startDate, endDate, 'day', '[]');
+    
+    // Debug log for each report
+    console.log("Processing Report:", {
+      reportDate: reportDate.format(),
+      reportBranch: report?.branches?.[0]?.branchCode,
+      matchesBranch,
+      matchesDate
     });
-    setFilteredData(
-      filtered.map((report) => ({
-        id: report._id,
-        branchCode: report.branches?.[0]?.branchCode || "N/A",
-        checklistTitle: report.checklistId?.title || "N/A",
-        driver: `${report.driverId?.firstname || "N/A"} ${
-          report.driverId?.lastname || ""
-        }`,
-        units: report.units?.map((unit) => unit.unitNumber).join(", ") || "N/A",
-        routes: report.routes
-          ?.map((routeId) => routeNumbers[routeId] || routeId)
-          .join(", ") || "N/A",
-        presentedReports: report.presentedReports || 0,
-        pendingReports: report.pendingReports || 0,
-        compliance: report.compliance || 0,
-        createdAt: report.createdAt,
-        formattedDate: moment(report.createdAt).format("YYYY-MM-DD") || "N/A",
-      }))
-    );
-    setShowDetails(true); // Show details view
+    
+    return matchesBranch && matchesDate;
+  });
+
+  console.log("Filtered results:", filtered);
+
+  const transformedData = filtered.map((report) => ({
+    _id: report._id,
+    id: report._id,
+    branchCode: report?.branches?.[0]?.branchCode || "N/A",
+    checklistTitle: report?.checklistId?.title || "N/A",
+    driver: `${report?.driverId?.firstname || "N/A"} ${report?.driverId?.lastname || ""}`,
+    units: report?.units?.map(unit => unit?.unitNumber)?.join(", ") || "N/A",
+    routes: report?.routes?.map(route => route?.routeNumber)?.join(", ") || "N/A",
+    presentedReports: report?.presentedReports || 1,
+    pendingReports: report?.pendingReports || 0,
+    compliance: report?.compliance || 100,
+    createdAt: report?.createdAt,
+    formattedDate: moment(report?.createdAt).format("YYYY-MM-DD") || "N/A",
+    answers: report?.answers || [],
+  }));
+
+  setFilteredData(transformedData);
+  setDateRange([startDate, endDate]);
+  
+  localStorage.setItem("selectedDateRange", JSON.stringify([
+    startDate.format("YYYY-MM-DD"),
+    endDate.format("YYYY-MM-DD")
+  ]));
+
+  setShowDetails(true);
+};
+
+  
+
+  // Filter reports based on selected branch and date range
+  useEffect(() => {
+    const storedDateRange = localStorage.getItem("selectedDateRange");
+    if (storedDateRange) {
+      const [start, end] = JSON.parse(storedDateRange);
+      setDateRange([moment(start), moment(end)]);
+    }
+  }, []);
+  
+  const handleViewChecklist = (checklistId) => {
+    setSelectedChecklistId(checklistId);
+    setIsChecklistVisible(true);
   };
+
+  const handleCloseChecklist = () => {
+    setIsChecklistVisible(false);
+    setSelectedChecklistId(null);
+  };
+  
+  
+  console.log("Selected Date Range:", dateRange);
+  console.log("Filtered Data:", filteredData);
+    
+  
+  
 
   const handleDownloadExcel = () => {
     if (filteredData.length === 0) {
@@ -159,22 +220,52 @@ const ReportsPage = () => {
 
   const averageCompliance = (totalPendingReports / totalPresentedReports) * 100;
 
-  if (showDetails) {
+  // Add a function to reset filters and data
+  const handleBackToReports = () => {
+    setShowDetails(false);
+    setSelectedBranch(null);
+    setDateRange([null, null]);
+    
+    // Reset filtered data to original reports data
+    if (reportsData) {
+      const reports = reportsData?.map((report) => ({
+        id: report?._id,
+        branchCode: report?.branches?.[0]?.branchCode || "N/A",
+        checklistTitle: report?.checklistId?.title || "N/A",
+        driver: `${report?.driverId?.firstname || "N/A"} ${
+          report?.driverId?.lastname || ""
+        }`,
+        units: report?.units?.map((unit) => unit?.unitNumber)?.join(", ") || "N/A",
+        routes: report?.routes?.map((route) => route?.routeNumber)?.join(", ") || "N/A",
+        presentedReports: report?.presentedReports || 1,
+        pendingReports: report?.pendingReports || 0,
+        compliance: report?.compliance || 100,
+        createdAt: report?.createdAt,
+        formattedDate: moment(report?.createdAt).format("YYYY-MM-DD") || "N/A",
+      }));
+      setFilteredData(reports);
+    }
+
+    // Clear the stored date range from localStorage
+    localStorage.removeItem("selectedDateRange");
+  };
+
+  if (showDetails && dateRange[0] && dateRange[1]) {
     return (
       <div>
-        <Button type="default" onClick={() => setShowDetails(false)}>
+        <Button type="default" onClick={handleBackToReports}>
           Back to Reports
         </Button>
         <ReportDetails
           branchName={selectedBranch || "All Branches"}
-          dateRange={dateRange.map((date) =>
-            date ? moment(date).format("YYYY-MM-DD") : "N/A"
-          )}
+          dateRange={[
+            dateRange[0].format("YYYY-MM-DD"),
+            dateRange[1].format("YYYY-MM-DD")
+          ]}
           data={filteredData}
           summary={{
             totalFaults: filteredData.length,
             averageCompliance: averageCompliance.toFixed(2),
-            averageTimeTaken: "2h 15m", // Example static value
           }}
         />
       </div>
@@ -253,13 +344,14 @@ const ReportsPage = () => {
             key: "actions",
             render: (record) => (
               <Button
-                type="link"
-                onClick={() => alert(`Viewing checklist for report ID: ${record.id}`)}
-              >
-                View Checklist
-              </Button>
+              type="link"
+              onClick={() => handleViewChecklist(record.id)}
+            >
+              View Checklist
+            </Button>
             ),
           },
+          
         ]}
         dataSource={filteredData}
         rowKey={(record) => record.id}
@@ -267,7 +359,15 @@ const ReportsPage = () => {
         pagination={{ pageSize: 10 }}
         size="small"
       />
-
+     
+     {isChecklistVisible && selectedChecklistId && (
+      <ChecklistDetail 
+        checklistId={selectedChecklistId} 
+        onClose={handleCloseChecklist}
+        visible={isChecklistVisible}
+      />
+    )}
+        
       {filteredData.length === 0 && !reportsLoading && (
         <div className="text-center text-gray-500 mt-4">No reports found.</div>
       )}
