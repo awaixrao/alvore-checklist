@@ -5,7 +5,7 @@ import DashboardHeader from "../../UI/Header";
 import Popup from "../../UI/PopUp";
 import unitimg from "../../assets/unitimg.png";
 import UnitList from "./unitsComponents/UnitList";
-import { usePostMutation, usePutMutation } from "../../services/apiService";
+import { usePostMutation, usePutMutation, useGetQuery } from "../../services/apiService";
 
 const { Option } = Select;
 
@@ -19,6 +19,23 @@ const Units = () => {
   const [insuranceFile, setInsuranceFile] = useState(null); // Store insurance file as binary
   const [vehicleCardFile, setVehicleCardFile] = useState(null); // Store vehicle card file as binary
   const formRef = useRef(null);
+
+  // Update this query to handle the response structure correctly
+  const { data: response } = useGetQuery({
+    path: "insurance-companies/get-all",
+  });
+  // Extract companies array from response
+  const insuranceCompanies = response?.data || [];
+
+  // Add this query to fetch vehicle categories
+  const { data: categoriesResponse } = useGetQuery({
+    path: "vehicle-category/get",
+  });
+  // Extract categories array from response
+  const vehicleCategories = Array.isArray(categoriesResponse) ? categoriesResponse : [];
+  console.log('Vehicle Categories:', vehicleCategories); // Debug log
+
+  console.log('Insurance Companies:', insuranceCompanies);
 
   const handleFileChange = (e, setFileState) => {
     const file = e.target.files[0];
@@ -39,7 +56,13 @@ const Units = () => {
       formData.append("model", values.model);
       formData.append("color", values.color);
       formData.append("year", values.year);
-      formData.append("insuranceCompany", values.insuranceCompany);
+      
+      // Find the company name using the selected ID
+      const selectedCompany = insuranceCompanies.find(
+        company => company._id === values.insuranceCompany
+      );
+      formData.append("insuranceCompany", selectedCompany?.name || '');
+      
       formData.append("branchCode", values.branchCode);
       formData.append("category", values.category);
 
@@ -75,8 +98,12 @@ const Units = () => {
 
   const handleEdit = (unit) => {
     setEditingUnit(unit);
+    
+    // Find the company object by name to get its ID
+    const companyObj = insuranceCompanies.find(
+      company => company.name === unit.insuranceCompany
+    );
 
-    // Safely access branchCode and set it in the form
     form.setFieldsValue({
       unitNumber: unit.unitNumber,
       plate: unit.plate,
@@ -84,8 +111,8 @@ const Units = () => {
       model: unit.model,
       color: unit.color,
       year: unit.year,
-      insuranceCompany: unit.insuranceCompany,
-      branchCode: unit.branch?.branchCode || "", // Use empty string if not available
+      insuranceCompany: companyObj?._id, // Use the ID instead of name
+      branchCode: unit.branch?.branchCode || "",
       category: unit.category,
     });
 
@@ -166,9 +193,11 @@ const Units = () => {
               ]}
             >
               <Select placeholder="Select insurance company">
-                <Option value="State Farm">State Farm</Option>
-                <Option value="Mapfre">Mapfre</Option>
-                <Option value="Allianz">Allianz</Option>
+                {Array.isArray(insuranceCompanies) && insuranceCompanies.map((company) => (
+                  <Option key={company._id} value={company._id}>
+                    {company.name}
+                  </Option>
+                ))}
               </Select>
             </Form.Item>
 
@@ -186,9 +215,11 @@ const Units = () => {
               rules={[{ required: true, message: "Category is required!" }]}
             >
               <Select placeholder="Select category">
-                <Option value="Delivery Units">Delivery Units</Option>
-                <Option value="Sales Units">Sales Units</Option>
-                <Option value="Supervision Units">Supervision Units</Option>
+                {vehicleCategories.map((category) => (
+                  <Option key={category._id} value={category.categoryname}>
+                    {category.categoryname}
+                  </Option>
+                ))}
               </Select>
             </Form.Item>
 
@@ -276,7 +307,7 @@ const Units = () => {
         </div>
       )}
 
-      {showPopup && <Popup onClose={() => setShowPopup(false)} />}
+      {showPopup && <Popup onClose={() => setShowPopup(false)} open={showPopup} />}
     </>
   );
 };

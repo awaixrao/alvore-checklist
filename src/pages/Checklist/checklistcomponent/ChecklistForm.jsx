@@ -18,6 +18,12 @@ const ChecklistForm = ({
   const [selectedBranches, setSelectedBranches] = useState([]);
   const [checklistTitle, setChecklistTitle] = useState("");
 
+  // Update this query to match the pattern used in Settings and Units
+  const { data: categoriesResponse } = useGetQuery({
+    path: "vehicle-category/get",
+  });
+  const vehicleCategories = Array.isArray(categoriesResponse) ? categoriesResponse : [];
+
   const { data: branchData, isLoading } = useGetQuery({
     path: "branch/get_all",
   });
@@ -46,7 +52,14 @@ const ChecklistForm = ({
   useEffect(() => {
     if (editingChecklist) {
       setChecklistTitle(editingChecklist?.title || "");
-      setSelectedUnitCategories(editingChecklist?.categories || []);
+      
+      // Map category names to their IDs when loading existing checklist
+      const categoryIds = editingChecklist?.categories?.map(categoryName => {
+        const category = vehicleCategories.find(c => c.categoryname === categoryName);
+        return category?._id;
+      }).filter(id => id); // Remove any undefined values
+      
+      setSelectedUnitCategories(categoryIds || []);
       setSelectedBranches(
         editingChecklist?.branches?.map((branch) => branch.branchCode) || []
       );
@@ -85,21 +98,28 @@ const ChecklistForm = ({
 
       console.log("categories", categories);
     }
-  }, [editingChecklist, setCategories]);
+  }, [editingChecklist, setCategories, vehicleCategories]);
 
   // Sync state with checklistPost
   useEffect(() => {
+    // Map selected category IDs to category objects
+    const selectedCategories = selectedUnitCategories.map(categoryId => {
+      const category = vehicleCategories.find(c => c._id === categoryId);
+      return category;
+    }).filter(category => category); // Remove any undefined values
+
     setChecklistPost((prev) => ({
       ...prev,
       title: checklistTitle,
-      categories: selectedUnitCategories,
-      branches: selectedBranches, // Ensure selected branches are synced
+      categories: selectedCategories, // Pass complete category objects
+      branches: selectedBranches,
     }));
   }, [
     checklistTitle,
     selectedUnitCategories,
     selectedBranches,
     setChecklistPost,
+    vehicleCategories,
   ]);
   useEffect(() => {
     console.log("Categories passed to ChecklistForm:", categories);
@@ -182,26 +202,29 @@ const ChecklistForm = ({
             onChange={(value) => setSelectedUnitCategories(value)}
             style={{ width: "100%" }}
           >
-            <Select.Option value="Delivery Units">Delivery Units</Select.Option>
-            <Select.Option value="Sales Units">Sales Units</Select.Option>
-            <Select.Option value="Supervision Units">
-              Supervision Units
-            </Select.Option>
+            {vehicleCategories.map((category) => (
+              <Select.Option key={category._id} value={category._id}>
+                {category.categoryname}
+              </Select.Option>
+            ))}
           </Select>
           <div className="flex flex-wrap mt-3">
-            {selectedUnitCategories?.map((cat) => (
-              <span
-                key={cat}
-                className="bg-blue-200 text-blue-700 px-3 py-1 rounded-lg mr-2 mb-2 cursor-pointer"
-                onClick={() =>
-                  setSelectedUnitCategories((prev) =>
-                    prev.filter((item) => item !== cat)
-                  )
-                }
-              >
-                {cat} &times;
-              </span>
-            ))}
+            {selectedUnitCategories?.map((catId) => {
+              const category = vehicleCategories.find(c => c._id === catId);
+              return (
+                <span
+                  key={catId}
+                  className="bg-blue-200 text-blue-700 px-3 py-1 rounded-lg mr-2 mb-2 cursor-pointer"
+                  onClick={() =>
+                    setSelectedUnitCategories((prev) =>
+                      prev.filter((item) => item !== catId)
+                    )
+                  }
+                >
+                  {category?.categoryname || catId} &times;
+                </span>
+              );
+            })}
           </div>
         </div>
 

@@ -44,7 +44,6 @@ const ChecklistPage = () => {
   };
 
   // Save the checklist
-  // Save the checklist
   const handleSaveChecklist = async () => {
     const { title, branches, categories } = checklistPost;
 
@@ -74,7 +73,7 @@ const ChecklistPage = () => {
       formData.append("title", title);
       branches.forEach((branch) => formData.append("branches[]", branch));
       categories.forEach((category) =>
-        formData.append("categories[]", category)
+        formData.append("categories[]", category._id)
       );
 
       // Append questions correctly
