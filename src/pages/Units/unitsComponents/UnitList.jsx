@@ -11,6 +11,18 @@ const UnitList = ({ onEdit }) => {
 
   const [deleteUnit] = useDeleteMutation(); // Delete unit API hook
 
+  // Fetch vehicle categories
+  const { data: categoriesResponse } = useGetQuery({
+    path: "vehicle-category/get",
+  });
+  const vehicleCategories = Array.isArray(categoriesResponse) ? categoriesResponse : [];
+
+  // Map category IDs to names
+  const categoryMap = vehicleCategories.reduce((acc, category) => {
+    acc[category._id] = category.categoryname; // Assuming category has _id and categoryname
+    return acc;
+  }, {});
+
   // Map the API response data to table data
   const units =
     data?.data.map((unit) => ({
@@ -154,6 +166,7 @@ const UnitList = ({ onEdit }) => {
       dataIndex: "category",
       key: "category",
       sorter: (a, b) => a.category.localeCompare(b.category),
+      render: (categoryId) => categoryMap[categoryId] || "N/A",
     },
     {
       title: "Actions",

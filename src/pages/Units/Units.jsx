@@ -20,22 +20,30 @@ const Units = () => {
   const [vehicleCardFile, setVehicleCardFile] = useState(null); // Store vehicle card file as binary
   const formRef = useRef(null);
 
-  // Update this query to handle the response structure correctly
+  // Fetch insurance companies
   const { data: response } = useGetQuery({
     path: "insurance-companies/get-all",
   });
-  // Extract companies array from response
   const insuranceCompanies = response?.data || [];
 
-  // Add this query to fetch vehicle categories
+  // Fetch vehicle categories
   const { data: categoriesResponse } = useGetQuery({
     path: "vehicle-category/get",
   });
-  // Extract categories array from response
   const vehicleCategories = Array.isArray(categoriesResponse) ? categoriesResponse : [];
   console.log('Vehicle Categories:', vehicleCategories); // Debug log
 
+  // Fetch branches
+  const { data: branchesResponse } = useGetQuery({
+    path: "branch/get_all",
+  });
+  const branches = branchesResponse?.data || []; // Assuming the API returns branches in this format
+
   console.log('Insurance Companies:', insuranceCompanies);
+
+  // Generate years for dropdown (from 2000 to current year)
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: currentYear - 2000 + 1 }, (_, i) => 2000 + i);
 
   const handleFileChange = (e, setFileState) => {
     const file = e.target.files[0];
@@ -182,7 +190,13 @@ const Units = () => {
               name="year"
               rules={[{ required: true, message: "Year is required!" }]}
             >
-              <Input placeholder="Enter year" />
+              <Select placeholder="Select year">
+                {years.map((year) => (
+                  <Option key={year} value={year}>
+                    {year}
+                  </Option>
+                ))}
+              </Select>
             </Form.Item>
 
             <Form.Item
@@ -206,7 +220,13 @@ const Units = () => {
               name="branchCode"
               rules={[{ required: true, message: "Branch code is required!" }]}
             >
-              <Input placeholder="Enter branch code" />
+              <Select placeholder="Select branch">
+                {branches.map((branch) => (
+                  <Option key={branch.branchCode} value={branch.branchCode}>
+                    {branch.branchCode}
+                  </Option>
+                ))}
+              </Select>
             </Form.Item>
 
             <Form.Item

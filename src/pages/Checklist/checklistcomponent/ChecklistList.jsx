@@ -8,6 +8,11 @@ const ChecklistList = ({ onEdit }) => {
     path: "checklist/get-all",
   });
 
+  // Fetch all categories
+  const { data: categoriesData } = useGetQuery({
+    path: "vehicle-category/get",
+  });
+
   const [deleteChecklist] = useDeleteMutation();
 
   // Edit Checklist Handler
@@ -43,7 +48,12 @@ const ChecklistList = ({ onEdit }) => {
       branches:
         checklist.branches?.map((branch) => branch.branchCode).join(", ") ||
         "N/A",
-      categories: checklist.categories?.join(", ") || "N/A",
+      categories: checklist.categories
+        ?.map((categoryId) => {
+          const category = categoriesData?.find(cat => cat._id === categoryId);
+          return category ? category.categoryname : "N/A";
+        })
+        .join(", ") || "N/A",
       createdBy:
         `${checklist.createdBy?.firstname || ""} ${
           checklist.createdBy?.lastname || ""

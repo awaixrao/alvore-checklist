@@ -48,7 +48,7 @@ const UserList = ({ onEdit }) => {
     try {
       const token = localStorage.getItem("authToken");
       await deleteUser({
-        path: `auth/delete/${id}`,
+        path: `auth/users/${id}`,
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -133,11 +133,7 @@ const UserList = ({ onEdit }) => {
       key: "actions",
       render: (record) => (
         <div className="flex space-x-2">
-          <Button
-            type="link"
-            onClick={() => onEdit(record)}
-            className="text-blue-600"
-          >
+          <Button type="link" onClick={() => onEdit(record)}>
             Edit
           </Button>
           <Popconfirm

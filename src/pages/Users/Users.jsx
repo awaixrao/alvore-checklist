@@ -1,19 +1,22 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Form, Input, Button, Upload, Select, message, DatePicker } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import Popup from "../../UI/PopUp";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 import UserList from "./usersComponents/UserList"; // Import the UserList component
-import { usePostMutation } from "../../services/apiService";
-
+import { usePostMutation, usePutMutation } from "../../services/apiService";
+import moment from "moment";
 const Users = () => {
   const [form] = Form.useForm();
   const [showPopup, setShowPopup] = useState(false); // State to control popup visibility
-  const [registerUser, { isLoading }] = usePostMutation(); // API hook
+  const [registerUser, { isLoading: creating }] = usePostMutation(); // API hook for creating users
+  const [updateUser, { isLoading: updating }] = usePutMutation(); // API hook for updating users
   const [showUserList, setShowUserList] = useState(false); // Toggle user list visibility
   const [phone, setPhone] = useState("");
-  const [licenseImage, setLicenseImage] = useState(null);
+  const [licenseImage, setLicenseImage] = useState(null); // Store license image as binary
+  const [editingUser, setEditingUser] = useState(null); // State to hold the user being edited
+  const formRef = useRef(null); // Ref to scroll to the form
 
   // State for displaying the top bar details
   const [firstName, setFirstName] = useState(""); // First Name
@@ -26,41 +29,95 @@ const Users = () => {
     return `${firstInitial}${lastInitial}`;
   };
 
-  // Submit handler
+  // Function to handle form submission
   const onFinish = async (values) => {
     try {
       const formData = new FormData();
       formData.append("firstname", values.first_name);
       formData.append("lastname", values.last_name);
       formData.append("username", values.username);
-      formData.append("password", values.password);
+      formData.append("password", values.password || ""); // Avoid missing password
+      formData.append("phone", phone);
       formData.append("role", values.role);
-      formData.append("phone", phone || "");
-      formData.append(
-        "licenseExpirationDate",
-        values.licenseExpirationDate || ""
-      );
-
-      // Append the license image if available
-      if (licenseImage) {
+      formData.append("licensenumber", values.licensenumber);
+  
+      // Append the license image if it exists
+      if (licenseImage && typeof licenseImage !== "string") {
         formData.append("licenseimage", licenseImage);
       }
-
-      const response = await registerUser({
-        path: "auth/register",
-        body: formData,
-      }).unwrap();
-
-      message.success(response.message || "User registered successfully!");
+  
+      // Append license expiration date if available
+      if (values.licenseExpirationDate) {
+        formData.append("licenseExpirationDate", values.licenseExpirationDate.format("YYYY-MM-DD"));
+      }
+  
+      console.log("Submitting FormData:", Object.fromEntries(formData.entries()));
+  
+      const response = editingUser
+        ? await updateUser({
+            path: `auth/users/${editingUser.id}`,
+            body: formData,
+          }).unwrap()
+        : await registerUser({
+            path: "auth/register",
+            body: formData,
+          }).unwrap();
+  
+      message.success(response.message || "User saved successfully!");
       setShowPopup(true);
+      form.resetFields();
+      setLicenseImage(null);
+      setEditingUser(null);
     } catch (error) {
-      message.error(
-        error?.data?.message || "Registration failed. Please try again."
-      );
+      console.error("Form Submission Error:", error);
+      message.error(error?.data?.message || "Operation failed. Please try again.");
     }
   };
+  
+  
 
   const onFinishFailed = (errorInfo) => {};
+  const handleLicenseFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setLicenseImage(file); // Store file as binary
+      message.success(`${file.name} selected successfully!`);
+    } else {
+      setLicenseImage(null);
+    }
+  };
+  
+  // Function to handle editing a user
+  const handleEditUser = (user) => {
+    setEditingUser(user);
+    setPhone(user.phone); // Set phone number for PhoneInput
+  
+    // Populate form fields with previous data
+    form.setFieldsValue({
+      first_name: user.firstname,
+      last_name: user.lastname,
+      username: user.username,
+      role: user.role,
+      phone: user.phone,
+      licensenumber: user.licensenumber,
+      licenseExpirationDate: user.licenseExpirationDate ? moment(user.licenseExpirationDate) : null,
+    });
+  
+    // Set the license image (if available)
+    if (user.licenseimage) {
+      setLicenseImage(user.licenseimage);
+    } else {
+      setLicenseImage(null);
+    }
+  
+    // Scroll to the form when editing
+    formRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+  
+  
+
+  // Effect to reset form when editing user changes
+
 
   return (
     <div className="min-h-screen">
@@ -79,7 +136,7 @@ const Users = () => {
       </div>
 
       {/* Form Container */}
-      <div className="bg-white p-8 rounded-lg shadow-lg w-[85%] mx-auto mt-8">
+      <div ref={formRef} className="bg-white p-8 rounded-lg shadow-lg w-[85%] mx-auto mt-8">
         <Form
           form={form}
           name="users_form"
@@ -145,37 +202,42 @@ const Users = () => {
               </Form.Item>
 
               <Form.Item
-  label="Phone Number"
-  name="phone"
-  rules={[
-    { required: true, message: "Phone number is required!" },
-    {
-      pattern: /^\+?[1-9]\d{1,14}$/,
-      message: "Enter a valid phone number!",
-    },
-  ]}
->
-  <PhoneInput
-    onlyCountries={["mx", "sv", "gt"]} // Mexico, El Salvador, Guatemala
-    country={"mx"} // Default country
-    value={phone}
-    onChange={(phone) => setPhone(phone)} // Update state on change
-    inputStyle={{
-      width: "100%",
-      borderRadius: "8px",
-      border: "1px solid #d9d9d9",
-      padding: "8px",
-    }}
-    buttonStyle={{ borderRadius: "8px" }}
-    placeholder="Enter Phone Number"
-  />
-</Form.Item>
+                label="Phone Number"
+                name="phone"
+                rules={[
+                  { required: true, message: "Phone number is required!" },
+                  {
+                    pattern: /^\+?[1-9]\d{1,14}$/,
+                    message: "Enter a valid phone number!",
+                  },
+                ]}
+              >
+                <PhoneInput
+                  onlyCountries={["mx", "sv", "gt"]} // Mexico, El Salvador, Guatemala
+                  country={"mx"} // Default country
+                  value={phone}
+                  onChange={(phone) => setPhone(phone)} // Update state on change
+                  inputStyle={{
+                    width: "100%",
+                    borderRadius: "8px",
+                    border: "1px solid #d9d9d9",
+                    padding: "10px 12px", // Adjust padding to ensure visibility
+                    paddingLeft: "50px", // Add padding to the left to accommodate the flag
+                  }}
+                  buttonStyle={{ borderRadius: "8px" }}
+                  placeholder="Enter Phone Number"
+                />
+              </Form.Item>
 
             </div>
 
             {/* Right Column */}
             <div className="space-y-4">
-              <Form.Item label="License Number" name="licensenumber">
+              <Form.Item
+                label="License Number"
+                name="licensenumber"
+                rules={[{ required: true, message: "License number is required!" }]}
+              >
                 <Input
                   placeholder="Enter License Number"
                   className="border rounded-md py-2 px-4"
@@ -197,19 +259,29 @@ const Users = () => {
                   format="YYYY-MM-DD" // Specify the date format
                 />
               </Form.Item>
-              <Form.Item
-                label="Upload License"
-                name="upload_license"
-                rules={[
-                  { required: true, message: "Please upload a license image!" },
-                ]}
-              >
-                <Input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setLicenseImage(e.target.files[0])}
-                />
-              </Form.Item>
+              <Form.Item label="Upload License" name="licenseimage">
+  {licenseImage ? (
+    <div className="mb-2">
+      <img
+        src={typeof licenseImage === "string" ? licenseImage : URL.createObjectURL(licenseImage)}
+        alt="License"
+        style={{
+          width: "100px",
+          height: "100px",
+          objectFit: "cover",
+          borderRadius: "5px",
+        }}
+      />
+    </div>
+  ) : null}
+  <Input
+    type="file"
+    accept="image/*"
+    onChange={handleLicenseFileChange}
+  />
+</Form.Item>
+
+
 
               <Form.Item
                 label="Role"
@@ -233,8 +305,8 @@ const Users = () => {
             >
               Cancel
             </Button>
-            <Button type="primary" htmlType="submit" loading={isLoading}>
-              Create{" "}
+            <Button type="primary" htmlType="submit" loading={creating || updating}>
+              {editingUser ? "Update" : "Create"}
             </Button>
           </div>
         </Form>
@@ -254,7 +326,7 @@ const Users = () => {
       {/* User List */}
       {showUserList && (
         <div className="mt-10">
-          <UserList onEdit={null} /> {/* Pass no edit handler */}
+          <UserList onEdit={handleEditUser} />
         </div>
       )}
 
