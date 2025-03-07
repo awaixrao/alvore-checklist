@@ -44,7 +44,7 @@ const Setting = () => {
   const handleDelete = async (id) => {
     try {
       await deleteInsuranceCompany({
-        path: `insurance-companies/${id}`,
+        path: `insurance-companies/delete/${id}`,
       }).unwrap();
       message.success("Insurance company deleted successfully!");
     } catch (error) {
