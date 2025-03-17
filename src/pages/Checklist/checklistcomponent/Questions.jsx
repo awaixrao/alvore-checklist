@@ -165,16 +165,16 @@ const Question = ({ question, updateQuestion, onRemove, onUploadImage }) => {
                 className="w-full px-3 py-2 border rounded-md"
                 placeholder={`Option ${index + 1}`}
               />
-              <div className="flex ml-2 space-x-2">
+              <div className="flex ml-2 space-x-3">
                 {["ok", "not_ok", "warning", "na"].map((iconValue) => (
                   <span
                     key={iconValue}
                     onClick={() => handleOptionChange(index, "icon", iconValue)}
-                    className={`cursor-pointer text-xl ${
-                      option.icon === iconValue
-                        ? "text-blue-500"
-                        : "text-gray-500"
-                    }`}
+                    className={`cursor-pointer transition-all duration-300 hover:shadow-lg p-1 rounded-full
+                      ${option.icon === iconValue
+                        ? "text-blue-500 transform scale-150 rotate-3 bg-blue-50 hover:rotate-6 hover:scale-155"
+                        : "text-gray-400 hover:text-gray-600 hover:scale-125 hover:bg-gray-50"
+                      }`}
                   >
                     {statusIcons[iconValue]}
                   </span>

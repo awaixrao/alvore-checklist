@@ -5,18 +5,37 @@ import DashboardHeader from "../../UI/Header";
 import { usePostMutation, usePutMutation, useGetQuery } from "../../services/apiService";
 import RoutesList from "./RouteComponents/RouteList";
 import routeimg from "../../assets/routesimg.png";
+import Popup from "../../UI/PopUp";
 
 const RoutesPage = () => {
+  
   const [form] = Form.useForm();
   const [showRoutesList, setShowRoutesList] = useState(false); // Toggle for routes list
   const [editingRoute, setEditingRoute] = useState(null); // State for editing route
   const [createRoute, { isLoading: creating }] = usePostMutation(); // Create route API hook
   const [updateRoute, { isLoading: updating }] = usePutMutation(); // Update route API hook
   const formRef = useRef(null); // Ref for scrolling to form
+  const [units, setUnits] = useState([]); // State to hold all units
+  const [filteredUnits, setFilteredUnits] = useState([]); // State to hold filtered units based on branch
+  const [showPopup, setShowPopup] = useState(false); // State to control the popup visibility
 
   // Fetch users and branch codes using API queries
-  const { data: users, error: usersError } = useGetQuery({ path: "auth/users" });
-  const { data: branches, error: branchesError } = useGetQuery({ path: "branch/get_all" });
+  const { data: users } = useGetQuery({ path: "auth/users" });
+  const { data: branches } = useGetQuery({ path: "branch/get_all" });
+  const { data: unitsResponse } = useGetQuery({ path: "car/get_all" }); // Fetch all units
+
+  // Set units when the component mounts
+  React.useEffect(() => {
+    if (unitsResponse) {
+      setUnits(unitsResponse.data || []);
+    }
+  }, [unitsResponse]);
+
+  const handleBranchChange = (branchCode) => {
+    // Filter units based on the selected branch code
+    const filtered = units.filter(unit => unit.branch.branchCode === branchCode);
+    setFilteredUnits(filtered); // Update the filtered units state
+  };
 
   const onFinish = async (values) => {
     try {
@@ -25,14 +44,20 @@ const RoutesPage = () => {
       const response = editingRoute
         ? await updateRoute({
             path: `route/update/${editingRoute.id}`,
-            body: values,
+            body: {
+              ...values,
+              economicUnit: values.economicNumber,
+            },
             headers: {
               Authorization: `Bearer ${token}`,
             },
           }).unwrap()
         : await createRoute({
             path: "route/create",
-            body: values,
+            body: {
+              ...values,
+              economicUnit: values.economicNumber,
+            },
             headers: {
               Authorization: `Bearer ${token}`,
             },
@@ -41,6 +66,7 @@ const RoutesPage = () => {
       message.success(response.message || "Route saved successfully!");
       setEditingRoute(null); // Clear editing state
       form.resetFields(); // Reset form fields
+      setShowPopup(true); // Show the congratulatory popup
       if (!showRoutesList) setShowRoutesList(true); // Show list after save
     } catch (error) {
       message.error(
@@ -57,7 +83,7 @@ const RoutesPage = () => {
       const routeToEdit = {
         routeNumber: route.routeNumber,
         branchCode: route.branchCode, // Branch Code
-        economicUnit: route.economicUnit, // Economic Unit
+        economicUnit: route.economicUnit, // Set this to match the expected field name
         username: route.user, // Set the username field from the route data
       };
 
@@ -102,22 +128,27 @@ const RoutesPage = () => {
               name="branchCode"
               rules={[{ required: true, message: "Branch code is required!" }]}
             >
-         <Select placeholder="Select Branch Code">
-  {branches?.data?.map((branch) => (
-    <Select.Option key={branch._id} value={branch.branchCode}>
-      {branch.branchCode}
-    </Select.Option>
-  ))}
-</Select>
-
+              <Select placeholder="Select Branch Code" onChange={handleBranchChange}>
+                {branches?.data?.map((branch) => (
+                  <Select.Option key={branch._id} value={branch.branchCode}>
+                    {branch.branchCode}
+                  </Select.Option>
+                ))}
+              </Select>
             </Form.Item>
 
             <Form.Item
-              label={<span className="text-gray-700 font-medium">Economic Unit</span>}
-              name="economicUnit"
-              rules={[{ required: true, message: "Economic unit is required!" }]}
+              label={<span className="text-gray-700 font-medium">Economic Number</span>}
+              name="economicNumber"
+              rules={[{ required: true, message: "Economic number is required!" }]}
             >
-              <Input placeholder="Enter Economic Unit" />
+              <Select placeholder="Select Economic Number">
+                {filteredUnits.map((unit) => (
+                  <Select.Option key={unit._id} value={unit.unitNumber}>
+                    {unit.unitNumber}
+                  </Select.Option>
+                ))}
+              </Select>
             </Form.Item>
 
             <Form.Item
@@ -125,14 +156,13 @@ const RoutesPage = () => {
               name="username"
               rules={[{ required: true, message: "Username is required!" }]}
             >
-             <Select placeholder="Select Username">
-  {users?.users?.map((user) => (
-    <Select.Option key={user._id} value={user.username}>
-      {user.username}
-    </Select.Option>
-  ))}
-</Select>
-
+              <Select placeholder="Select Username">
+                {users?.users?.map((user) => (
+                  <Select.Option key={user._id} value={user.username}>
+                    {user.username}
+                  </Select.Option>
+                ))}
+              </Select>
             </Form.Item>
           </div>
 
@@ -174,6 +204,9 @@ const RoutesPage = () => {
           <RoutesList onEdit={handleEdit} />
         </div>
       )}
+
+      {/* Popup for congratulatory message */}
+      {showPopup && <Popup onClose={() => setShowPopup(false)} />}
     </>
   );
 };

@@ -73,6 +73,7 @@ const Units = () => {
       
       formData.append("branchCode", values.branchCode);
       formData.append("category", values.category);
+      formData.append("economicNumber", values.economicNumber);
 
       if (insuranceFile) {
         formData.append("insuranceUpload", insuranceFile);
@@ -122,6 +123,7 @@ const Units = () => {
       insuranceCompany: companyObj?._id, // Use the ID instead of name
       branchCode: unit.branch?.branchCode || "",
       category: unit.category,
+      economicNumber: unit.economicNumber,
     });
 
     // Store previous file URLs to show images
@@ -146,7 +148,7 @@ const Units = () => {
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-2">
             <Form.Item
-              label="Unit Number"
+              label="Economic Number"
               name="unitNumber"
               rules={[{ required: true, message: "Unit number is required!" }]}
             >
@@ -241,6 +243,14 @@ const Units = () => {
                   </Option>
                 ))}
               </Select>
+            </Form.Item>
+
+            <Form.Item
+              label={<span className="text-gray-700 font-medium">Economic Number</span>}
+              name="economicNumber"
+              rules={[{ required: true, message: "Economic number is required!" }]}
+            >
+              <Input placeholder="Enter Economic Number" />
             </Form.Item>
 
             <Form.Item label="Upload Insurance" name="insuranceUpload">

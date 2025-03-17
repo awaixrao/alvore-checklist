@@ -1,9 +1,92 @@
 import React, { useEffect, useState } from "react";
-import { Table, Select, DatePicker, Button, message } from "antd";
+import { Table, Select, DatePicker, Button, message, Modal } from "antd";
 import { useGetQuery } from "../../services/apiService";
 import moment from "moment";
 import ReportDetails from "./components/ReportDetails";
 import * as XLSX from "xlsx";
+
+// Either import the ChecklistDetail component if it exists elsewhere
+// import ChecklistDetail from "./components/ChecklistDetail";
+
+// Or create a simple ChecklistDetail component here
+const ChecklistDetail = ({ checklistId, visible, onClose }) => {
+  const [checklistData, setChecklistData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch checklist details
+  const { data, isLoading, error } = useGetQuery({
+    path: `driver/checklist/get/${checklistId}`,
+    skip: !checklistId
+  });
+
+  useEffect(() => {
+    if (data) {
+      setChecklistData(data);
+      setLoading(false);
+    }
+    if (error) {
+      message.error("Failed to load checklist details");
+      setLoading(false);
+    }
+  }, [data, error]);
+
+  return (
+    <Modal
+      title="Checklist Details"
+      open={visible}
+      onCancel={onClose}
+      footer={[
+        <Button key="close" onClick={onClose}>
+          Close
+        </Button>
+      ]}
+      width={800}
+    >
+      {loading ? (
+        <div className="text-center p-4">Loading checklist details...</div>
+      ) : checklistData ? (
+        <div>
+          <h2 className="text-lg font-bold mb-4">{checklistData.title}</h2>
+          {checklistData.questions && checklistData.questions.length > 0 ? (
+            <Table
+              dataSource={checklistData.questions}
+              rowKey={(record) => record._id}
+              columns={[
+                { title: "Question", dataIndex: "question", key: "question" },
+                { title: "Type", dataIndex: "type", key: "type" },
+                { 
+                  title: "Answer", 
+                  key: "answer",
+                  render: (_, record) => {
+                    // Find the corresponding answer from the answers array
+                    const answer = checklistData.answers?.find(a => a.questionId === record._id);
+                    if (!answer) return "Not answered";
+                    
+                    switch (record.type) {
+                      case "boolean":
+                        return answer.value ? "Yes" : "No";
+                      case "text":
+                        return answer.value || "N/A";
+                      case "select":
+                        return answer.value || "N/A";
+                      default:
+                        return "N/A";
+                    }
+                  }
+                }
+              ]}
+              pagination={false}
+            />
+          ) : (
+            <div className="text-center">No questions found in this checklist.</div>
+          )}
+        </div>
+      ) : (
+        <div className="text-center text-red-500">Failed to load checklist data</div>
+      )}
+    </Modal>
+  );
+};
 
 const ReportsPage = () => {
   const [selectedBranch, setSelectedBranch] = useState(null);
@@ -12,7 +95,8 @@ const ReportsPage = () => {
   const [routeNumbers, setRouteNumbers] = useState({});
   const [selectedChecklistId, setSelectedChecklistId] = useState(null); // State to store the checklistId
   const [isChecklistVisible, setIsChecklistVisible] = useState(false); // State to control visibility of checklist details
-
+  const [selectedResponse, setSelectedResponse] = useState(null); // State for selected response
+  const [isResponseVisible, setIsResponseVisible] = useState(false); // State to control visibility of response details
 
   const [totalUsers, setTotalUsers] = useState(0);
   const [totalChecklists, setTotalChecklists] = useState(0);
@@ -68,6 +152,7 @@ const ReportsPage = () => {
         id: report?._id,
         branchCode: report?.branches?.[0]?.branchCode || "N/A",
         checklistTitle: report?.checklistId?.title || "N/A",
+        checklistId: report?.checklistId?._id, // Add this to store the actual checklist ID
         driver: `${report?.driverId?.firstname || "N/A"} ${
           report?.driverId?.lastname || ""
         }`,
@@ -78,6 +163,7 @@ const ReportsPage = () => {
         compliance: report?.compliance || 100,
         createdAt: report?.createdAt,
         formattedDate: moment(report?.createdAt).format("YYYY-MM-DD") || "N/A",
+        answers: report?.answers || [], // Store the answers for use in the modal
       }));
       setFilteredData(reports);
     }
@@ -137,6 +223,7 @@ const ReportsPage = () => {
     id: report._id,
     branchCode: report?.branches?.[0]?.branchCode || "N/A",
     checklistTitle: report?.checklistId?.title || "N/A",
+    checklistId: report?.checklistId?._id,
     driver: `${report?.driverId?.firstname || "N/A"} ${report?.driverId?.lastname || ""}`,
     units: report?.units?.map(unit => unit?.unitNumber)?.join(", ") || "N/A",
     routes: report?.routes?.map(route => route?.routeNumber)?.join(", ") || "N/A",
@@ -159,8 +246,6 @@ const ReportsPage = () => {
   setShowDetails(true);
 };
 
-  
-
   // Filter reports based on selected branch and date range
   useEffect(() => {
     const storedDateRange = localStorage.getItem("selectedDateRange");
@@ -171,22 +256,21 @@ const ReportsPage = () => {
   }, []);
   
   const handleViewChecklist = (checklistId) => {
-    setSelectedChecklistId(checklistId);
-    setIsChecklistVisible(true);
+    // Filter the response based on the checklistId
+    const response = filteredData.find(report => report.checklistId._id === checklistId);
+    if (response) {
+      setSelectedResponse(response);
+      setIsResponseVisible(true);
+    } else {
+      message.warning("No response found for this checklist.");
+    }
   };
 
-  const handleCloseChecklist = () => {
-    setIsChecklistVisible(false);
-    setSelectedChecklistId(null);
+  const handleCloseResponse = () => {
+    setIsResponseVisible(false);
+    setSelectedResponse(null);
   };
   
-  
-  console.log("Selected Date Range:", dateRange);
-  console.log("Filtered Data:", filteredData);
-    
-  
-  
-
   const handleDownloadExcel = () => {
     if (filteredData.length === 0) {
       message.warning("No data available to download.");
@@ -211,12 +295,8 @@ const ReportsPage = () => {
     XLSX.writeFile(workbook, "reports.xlsx");
   };
   
-  
-
   const totalPresentedReports = reportsData?.length || 0;
-
   const totalPendingReports = Math.round(totalPresentedReports / 2.5);
-
   const averageCompliance = (totalPendingReports / totalPresentedReports) * 100;
 
   // Add a function to reset filters and data
@@ -231,6 +311,7 @@ const ReportsPage = () => {
         id: report?._id,
         branchCode: report?.branches?.[0]?.branchCode || "N/A",
         checklistTitle: report?.checklistId?.title || "N/A",
+        checklistId: report?.checklistId?._id,
         driver: `${report?.driverId?.firstname || "N/A"} ${
           report?.driverId?.lastname || ""
         }`,
@@ -241,6 +322,7 @@ const ReportsPage = () => {
         compliance: report?.compliance || 100,
         createdAt: report?.createdAt,
         formattedDate: moment(report?.createdAt).format("YYYY-MM-DD") || "N/A",
+        answers: report?.answers || [],
       }));
       setFilteredData(reports);
     }
@@ -288,10 +370,6 @@ const ReportsPage = () => {
               </Select.Option>
             ))}
           </Select>
-          <DatePicker.RangePicker
-            onChange={(dates) => setDateRange(dates)}
-            format="YYYY-MM-DD"
-          />
           <Button type="primary" onClick={handleFilter} size="small">
             Filter
           </Button>
@@ -301,29 +379,10 @@ const ReportsPage = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
-        <div className="bg-green-500 text-white rounded-lg p-4 shadow-md flex items-center justify-between">
-          <h3 className="font-semibold text-sm">Number of Fixed Issues</h3>
-          <span className="text-2xl font-bold">0</span>
-        </div>
-        <div className="bg-orange-500 text-white rounded-lg p-4 shadow-md flex items-center justify-between">
-          <h3 className="font-semibold text-sm">Pending Issues</h3>
-          <span className="text-2xl font-bold">0</span>
-        </div>
-      </div>
-
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4">
         <div className="bg-white rounded-lg p-2 shadow-md border flex flex-col items-center">
           <h3 className="font-semibold text-xs">Reports Presented</h3>
           <div className="text-xl font-bold">{totalPresentedReports}</div>
-        </div>
-        <div className="bg-white rounded-lg p-2 shadow-md border flex flex-col items-center">
-          <h3 className="font-semibold text-xs">Pending Reports</h3>
-          <div className="text-xl font-bold">{totalPendingReports}</div>
-        </div>
-        <div className="bg-white rounded-lg p-2 shadow-md border flex flex-col items-center">
-          <h3 className="font-semibold text-xs">Average Compliance</h3>
-          <div className="text-xl font-bold">{averageCompliance.toFixed(2)}%</div>
         </div>
       </div>
 
@@ -341,16 +400,15 @@ const ReportsPage = () => {
           {
             title: "Actions",
             key: "actions",
-            render: (record) => (
+            render: (_, record) => (
               <Button
-              type="link"
-              onClick={() => handleViewChecklist(record.id)}
-            >
-              View Checklist
-            </Button>
+                type="link"
+                onClick={() => handleViewChecklist(record.checklistId._id)}
+              >
+                View Checklist
+              </Button>
             ),
           },
-          
         ]}
         dataSource={filteredData}
         rowKey={(record) => record.id}
@@ -358,14 +416,43 @@ const ReportsPage = () => {
         pagination={{ pageSize: 10 }}
         size="small"
       />
-     
-     {isChecklistVisible && selectedChecklistId && (
-      <ChecklistDetail 
-        checklistId={selectedChecklistId} 
-        onClose={handleCloseChecklist}
-        visible={isChecklistVisible}
-      />
-    )}
+
+      {/* Modal for displaying response details */}
+      <Modal
+        title={`Response Details for ${selectedResponse?.checklistId.title}`}
+        visible={isResponseVisible}
+        onCancel={handleCloseResponse}
+        footer={null}
+        width={800}
+      >
+        {selectedResponse && (
+          <div>
+            <h3>Driver: {selectedResponse.driverId ? `${selectedResponse.driverId.firstname} ${selectedResponse.driverId.lastname}` : "N/A"}</h3>
+            <h4>Branch: {selectedResponse.branches && selectedResponse.branches.length > 0 ? selectedResponse.branches[0].branchCode : "N/A"}</h4>
+            <h4>Unit: {selectedResponse.units && selectedResponse.units.length > 0 ? selectedResponse.units[0].unitNumber : "N/A"}</h4>
+            <h4>Route: {selectedResponse.routes && selectedResponse.routes.length > 0 ? selectedResponse.routes[0].routeNumber : "N/A"}</h4>
+            <h4>Created At: {moment(selectedResponse.createdAt).format("YYYY-MM-DD")}</h4>
+            <h4>Answers:</h4>
+            <ul>
+              {selectedResponse.answers.map(answer => (
+                <li key={answer.questionId}>
+                  <strong>Question ID: {answer.questionId}</strong><br />
+                  Answer: {answer.answer || "N/A"}<br />
+                  Comment: {answer.comment || "N/A"}<br />
+                  {answer.uploadedImages.length > 0 && (
+                    <div>
+                      <strong>Uploaded Images:</strong>
+                      {answer.uploadedImages.map((img, index) => (
+                        <img key={index} src={img} alt="Uploaded" style={{ width: "100px", margin: "5px" }} />
+                      ))}
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </Modal>
         
       {filteredData.length === 0 && !reportsLoading && (
         <div className="text-center text-gray-500 mt-4">No reports found.</div>

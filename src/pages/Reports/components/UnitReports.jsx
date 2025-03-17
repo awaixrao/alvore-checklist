@@ -123,19 +123,6 @@ const UnitReports = ({ data = [], unit, branchName, dateRange }) => {
         />
       </div>
 
-      {/* Fault Statistics Cards */}
-      <Row gutter={[16, 16]} className="mb-4">
-        {faultStats.map((stat) => (
-          <Col key={stat.fault} xs={24} sm={12} md={8}>
-            <Card className="shadow-md">
-              <h2 className="text-lg font-semibold">{stat.fault}</h2>
-              <p className="text-2xl font-bold">{stat.count}</p>
-              <p className="text-sm text-gray-500">{stat.percentage}% of Total Faults</p>
-            </Card>
-          </Col>
-        ))}
-      </Row>
-
       {/* Table Section */}
       {filteredData.length > 0 ? (
         <Table

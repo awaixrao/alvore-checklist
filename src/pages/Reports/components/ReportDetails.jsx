@@ -109,12 +109,6 @@ const ReportDetails = ({ branchName, dateRange, data, summary }) => {
             {processedData.reduce((sum, item) => sum + item.faultsReported, 0)}
           </p>
         </Card>
-        <Card className="shadow-md">
-          <h2 className="text-lg font-semibold">Average Compliance</h2>
-          <p className="text-2xl font-bold text-green-500">
-            {summary?.averageCompliance || "0"}%
-          </p>
-        </Card>
       </div>
 
       <Table
