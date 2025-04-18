@@ -33,10 +33,15 @@ const UnitList = ({ onEdit }) => {
       model: unit.model,
       color: unit.color,
       year: unit.year,
-      insuranceCompany: unit.insuranceCompany,
+      // Handle insurance company as an object
+      insuranceCompany: unit.insuranceCompany?.name || "N/A",
+      // Also store the insurance company ID for editing
+      insuranceCompanyId: unit.insuranceCompany?._id || null,
       insuranceUpload: unit.insuranceUpload,
       vehicleCardUpload: unit.vehicleCardUpload,
       branchCode: unit.branch?.branchCode || "N/A", // Safely access branchCode
+      // Store branch information for editing
+      branch: unit.branch,
       category: unit.category || "N/A", // Include the category field
     })) || [];
 
@@ -69,6 +74,16 @@ const UnitList = ({ onEdit }) => {
         error?.data?.message || "Failed to delete unit. Please try again."
       );
     }
+  };
+
+  // Handle edit action
+  const handleEdit = (record) => {
+    // Pass all the unit data to the parent component's onEdit function
+    onEdit({
+      ...record,
+      // Override the insuranceCompany with its ID for the form to work correctly
+      insuranceCompany: record.insuranceCompanyId,
+    });
   };
 
   // Define table columns
@@ -165,15 +180,15 @@ const UnitList = ({ onEdit }) => {
       title: "Category",
       dataIndex: "category",
       key: "category",
-      sorter: (a, b) => a.category.localeCompare(b.category),
-      render: (categoryId) => categoryMap[categoryId] || "N/A",
+      sorter: (a, b) => String(a.category).localeCompare(String(b.category)),
+      render: (categoryId) => categoryMap[categoryId] || categoryId,
     },
     {
       title: "Actions",
       key: "actions",
       render: (record) => (
         <div className="flex space-x-2">
-          <Button type="link" onClick={() => onEdit(record)}>
+          <Button type="link" onClick={() => handleEdit(record)}>
             Edit
           </Button>
           <Popconfirm

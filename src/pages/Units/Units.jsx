@@ -65,21 +65,26 @@ const Units = () => {
       formData.append("color", values.color);
       formData.append("year", values.year);
       
-      // Find the company name using the selected ID
-      const selectedCompany = insuranceCompanies.find(
-        company => company._id === values.insuranceCompany
-      );
-      formData.append("insuranceCompany", selectedCompany?.name || '');
+      // Send the insurance company ID directly
+      // This is the key change - sending ID instead of name
+      formData.append("insuranceCompany", values.insuranceCompany);
       
       formData.append("branchCode", values.branchCode);
       formData.append("category", values.category);
       formData.append("economicNumber", values.economicNumber);
 
       if (insuranceFile) {
-        formData.append("insuranceUpload", insuranceFile);
+        // Only append if it's a File object, not a URL string
+        if (insuranceFile instanceof File) {
+          formData.append("insuranceUpload", insuranceFile);
+        }
       }
+      
       if (vehicleCardFile) {
-        formData.append("vehicleCardUpload", vehicleCardFile);
+        // Only append if it's a File object, not a URL string
+        if (vehicleCardFile instanceof File) {
+          formData.append("vehicleCardUpload", vehicleCardFile);
+        }
       }
 
       const response = editingUnit
@@ -112,6 +117,14 @@ const Units = () => {
     const companyObj = insuranceCompanies.find(
       company => company.name === unit.insuranceCompany
     );
+    
+    // If insurance company object is found, use its ID, otherwise use null
+    const insuranceCompanyId = companyObj?._id || null;
+    
+    if (!insuranceCompanyId && unit.insuranceCompany) {
+      // Log warning if company not found
+      console.warn(`Insurance company "${unit.insuranceCompany}" not found in the dropdown list`);
+    }
 
     form.setFieldsValue({
       unitNumber: unit.unitNumber,
@@ -120,13 +133,13 @@ const Units = () => {
       model: unit.model,
       color: unit.color,
       year: unit.year,
-      insuranceCompany: companyObj?._id, // Use the ID instead of name
+      insuranceCompany: insuranceCompanyId, // Use the ID
       branchCode: unit.branch?.branchCode || "",
       category: unit.category,
       economicNumber: unit.economicNumber,
     });
 
-    // Store previous file URLs to show images
+    // Store previous file URLs or null
     setInsuranceFile(unit.insuranceUpload || null);
     setVehicleCardFile(unit.vehicleCardUpload || null);
 
@@ -245,16 +258,8 @@ const Units = () => {
               </Select>
             </Form.Item>
 
-            <Form.Item
-              label={<span className="text-gray-700 font-medium">Economic Number</span>}
-              name="economicNumber"
-              rules={[{ required: true, message: "Economic number is required!" }]}
-            >
-              <Input placeholder="Enter Economic Number" />
-            </Form.Item>
-
             <Form.Item label="Upload Insurance" name="insuranceUpload">
-              {insuranceFile ? (
+              {typeof insuranceFile === 'string' && insuranceFile ? (
                 <div className="mb-2">
                   <img
                     src={insuranceFile}
@@ -276,7 +281,7 @@ const Units = () => {
             </Form.Item>
 
             <Form.Item label="Upload Vehicle Card" name="vehicleCardUpload">
-              {vehicleCardFile ? (
+              {typeof vehicleCardFile === 'string' && vehicleCardFile ? (
                 <div className="mb-2">
                   <img
                     src={vehicleCardFile}
